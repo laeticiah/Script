@@ -1,0 +1,6 @@
+PyGithub
+pyhcl
+python-dotenv
+python-hcl2
+cfn-flip
+pyyaml
