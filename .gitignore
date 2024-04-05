@@ -10,3 +10,4 @@ __pycache__/
 t__*/
 t__*
 *.log
+.env
