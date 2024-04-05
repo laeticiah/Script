@@ -1,0 +1,12 @@
+.python-version
+.vscode/
+.venv/
+__pycache__/
+
+# output files
+.csv
+
+# local debug/capture files
+t__*/
+t__*
+*.log
