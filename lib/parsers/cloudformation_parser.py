@@ -1,44 +1,25 @@
-import hcl2
-import hcl
+import json
 from collections import defaultdict
+from cfn_flip import to_json, load
 
-def parse_with_hcl2(file_content):
+
+def parse_cloudformation_file(file_content):
     try:
-        return hcl2.loads(file_content), 2
-    except Exception:
-        # HCL2 parsing failed, attempt with HCL1
-        return None, None
-
-def parse_with_hcl1(file_content):
-    try:
-        return hcl.loads(file_content), 1
-    except Exception:
-        # HCL1 parsing also failed
-        return None, None
-
-def parse_terraform_file(file_content):
-    # Try parsing with HCL2 first
-    parsed_content, version = parse_with_hcl2(file_content)
-    if parsed_content is None:
-        # If HCL2 parsing fails, try with HCL1
-        parsed_content, version = parse_with_hcl1(file_content)
+        # Convert CloudFormation YAML to JSON with cfn_flip
+        json_content = to_json(file_content)
+        # load JSON formatted CloudFormation files
+        parsed_content = json.loads(json_content)
+    except Exception as e:
+        raise Exception(f"Error parsing CloudFormation file: {str(e)}")
     
     # Initialize a dictionary to count the types of resources
     resource_counts = defaultdict(int)
-
-    # Check if parsing was successful
-    if parsed_content:
-        # Traverse the parsed content for resource declarations
-        if 'resource' in parsed_content:
-            for resource_group in parsed_content['resource']:
-                for resource_type in resource_group:
-                    resource_counts[resource_type] += len(resource_group[resource_type])
+    # Traverse the parsed content for resource declarations
+    if 'Resources' in parsed_content:
+        for resource in parsed_content['Resources']:
+            resource_type = parsed_content['Resources'][resource]['Type']
+            resource_counts[resource_type] += 1
 
     # Convert the defaultdict to a regular dict for return
     resource_counts = dict(resource_counts)
-    # Prepare the output with a more descriptive key for the HCL version
-    output = {
-        "Resource Types and Counts": resource_counts,
-        "HCL Version": f"HCLv{version}" if version else "Unknown"
-    }
-    return output
+    return resource_counts
