@@ -1,54 +1,29 @@
-from github import Github, GithubException, Repository, ContentFile, Branch
+from github import Github, GithubException, Repository, ContentFile, Branch # type: ignore
 from typing import List, Dict, Any
 import collections
 import csv
-import fnmatch
-import logging
 
-logger = logging.getLogger(__name__)
+from lib.file_manager import write_to_csv, process_and_analyze_file, create_match_function
+from lib.logger import setup_logger
 
-def init_github(github_token: str) -> Github:
+
+logger = setup_logger(__name__)
+
+def init_github(github_token: str, github_endpoint: str) -> Github:
     """
-    Initialize Github instance with the provided token.
+    Initialize Github instance with the provided token and endpoint.
 
     Args:
         github_token: The user's Github personal access token.
+        github_endpoint: The endpoint of the Github Enterprise instance. Please replace hostname in https://hostname/api/v3/ with your GitHub Enterprise instance hostname.
 
     Returns:
         Github instance.
     """
-    return Github(github_token)
+    return Github(base_url=github_endpoint, login_or_token=github_token)
 
 
-def match_file(file_name: str, file_match: str) -> bool:
-    return fnmatch.fnmatch(file_name, file_match)
-
-
-def match_content(file_content: ContentFile.ContentFile, content_match: list) -> bool:
-    decoded_content = file_content.decoded_content.decode('utf-8')
-    return any(match in decoded_content for match in content_match)
-
-
-def create_match_function(asset: dict):
-    """
-    Creates a match function for a given asset.
-    
-    Args:
-        asset: The configurations for the parse function and match type.
-
-    Returns:
-        A callable that takes a Github File Content object and
-        returns True if the file or its content matches the asset configuration.
-    """
-    if asset['matchType'] == 'file':
-        return lambda file_content: match_file(file_content.name, asset['file_match'])
-    elif asset['matchType'] == 'content':
-        return lambda file_content: match_content(file_content, asset['content_match'])
-    
-    return lambda file_content: False
-
-
-def extract_files_from_repo(repo: Repository.Repository, match_function: callable) -> List[ContentFile.ContentFile]:
+def extract_files_from_repo(repo: Repository.Repository, match_function: callable = lambda file: True) -> List[ContentFile.ContentFile]:
     """
     Extracts the list of files from the repository that match a specified condition.
 
@@ -71,12 +46,14 @@ def extract_files_from_repo(repo: Repository.Repository, match_function: callabl
 
         if isinstance(file_content, list):  # multiple 'content' items are received
             for file in file_content:
-                logger.debug(f'\nprocessing: {file}\n')
+                logger.info(f'processing: {file}')
                 if file.type == "dir":
                     queue.extend(repo.get_contents(file.path))
                 elif match_function(file):
                     matched_files.append(file)
         else:  # single 'content' item
+            logger.info(f'processing: {file_content}')
+
             if file_content.type == "dir":
                 queue.extend(repo.get_contents(file_content.path))
             elif match_function(file_content):
@@ -117,8 +94,9 @@ def get_repo_metadata(a_repo: Repository.Repository) -> dict[str, Any]:
         "branch_protection": _protection,
         "archived": a_repo.archived
     }
-
+    
     return metadata
+
 
 def analyze_repo(repo: Repository.Repository, config: List[Dict[str, Any]], writer: csv.writer):
     """ Analyze a single Github repository based on a provided configuration """
@@ -127,6 +105,10 @@ def analyze_repo(repo: Repository.Repository, config: List[Dict[str, Any]], writ
     # Extract metadata
     branch_metadata = get_repo_metadata(a_repo=repo)
 
+    # Pre-Fetch all files from repo
+    all_files = extract_files_from_repo(repo)
+
+    config_with_match_functions = []
     for asset in config:
         # Check asset structure.
         # If a certain asset is malformed in the configuration, don't break the loop, skip it.
@@ -134,19 +116,20 @@ def analyze_repo(repo: Repository.Repository, config: List[Dict[str, Any]], writ
             logger.warning(f"Asset structure is incorrect: {asset}")
             continue
 
-        match_function = create_match_function(asset=asset)
+        asset_with_match_function = asset.copy()
+        asset_with_match_function['match_function'] = create_match_function(asset=asset)
+        config_with_match_functions.append(asset_with_match_function)
 
-        # Extract files based on the match_function
-        files = extract_files_from_repo(repo, match_function)
-
-        for file_content in files:
-            try:
-                asset_type, analysis_result = process_and_analyze_file(asset, file_content, repo)
-                # Write info to the CSV
-                write_to_csv(writer, repo, asset_type, file_content, branch_metadata, analysis_result)
-            except Exception as e: 
-                logger.error(f"Failed to process file {file_content.path}: {str(e)}")
-            except GithubException as e:
-                logger.error(f"Error processing repo {repo.full_name}: {e}")
-            except ParserNotFound as e: 
-                logger.warning(f"Could not find parser for the asset {asset['file_match']}: {e}")
+    for file_content in all_files:
+        for asset_with_match_function in config_with_match_functions:
+            if asset_with_match_function['match_function'](file_content):
+                try:
+                    asset_type, analysis_result = process_and_analyze_file(asset_with_match_function, file_content, repo)
+                    logger.info(f"Got Analysis Result: {asset_type}: {analysis_result}")
+                    write_to_csv(writer, [repo, asset_type, file_content, branch_metadata, analysis_result])
+                except GithubException as e:
+                    logger.error(f"Error processing repo {repo.full_name}: {e}")
+                    continue
+                except Exception as e:
+                    logger.error(f"Failed to process file {file_content.path}: {str(e)}")
+                    continue
