@@ -1,8 +1,9 @@
-from dotenv import load_dotenv
+from dotenv import load_dotenv # type: ignore
 import os
-import logging
+from lib.logger import setup_logger
 
-logger = logging.getLogger(__name__)
+
+logger = setup_logger(__name__)
 
 def load_env_var(var_name:str):
     """
