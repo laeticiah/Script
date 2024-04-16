@@ -1,19 +1,14 @@
- # Set base image (host OS)
+# Use the official Python 3 image from Docker Hub as the base image
 FROM python:3.9
 
 # Set the working directory in the container
-WORKDIR /code
+WORKDIR /app
 
-# Copy dependencies file to the working directory
+# Copy the requirements file into the container
 COPY requirements.txt .
 
 # Install any dependencies
-RUN python -m venv .venv && \
-    /bin/bash -c "source .venv/bin/activate" && \
-    pip install --upgrade -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the content of the local src directory to the working directory
+# Copy the rest of your application's code into the container
 COPY . .
-
-# Command to run on container start
-CMD [ "sh", "-c", "source .venv/bin/activate && python gh_crawler.py laeticiah config.yaml output.csv"]

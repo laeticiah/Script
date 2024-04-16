@@ -1,6 +1,6 @@
 import ast
 
-def find_boto3_resource_creations(script_path):
+def parse_boto3_file(script_path):
     with open(script_path, 'r') as file:
         script = file.read()
 
@@ -18,6 +18,6 @@ def find_boto3_resource_creations(script_path):
     return resource_creations
 
 if __name__ == '__main__':
-    script_path = r'/workspaces/corebridge-github-crawler/resources/boto3-script.py'
-    resources = find_boto3_resource_creations(script_path)
+    script_path = r'resources/boto3-script.py'
+    resources = parse_boto3_file(script_path)
     print(f'Resources being created: {resources}')

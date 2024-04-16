@@ -3,7 +3,7 @@ import csv
 import fnmatch
 import yaml # type: ignore
 
-from lib.parsers import cloudformation_parser, terraform_parser, boto3_parser
+from lib.parsers import cloudformation_parser, terraform_parser, boto3_parser, pshell_parser, shell_parser, ansible_parser
 from lib.logger import setup_logger
 
 
@@ -147,6 +147,12 @@ def process_and_analyze_file(asset: dict, file_content: ContentFile.ContentFile,
         parse_function = terraform_parser.parse_terraform_file
     elif asset.get("parse_function") == 'boto3':
         parse_function = boto3_parser.parse_boto3_file
+    elif asset.get("parse_function") == 'powershell':
+        parse_function = pshell_parser.parse_powershell_file
+    elif asset.get("parse_function") == 'shell':
+        parse_function = shell_parser.parse_shell_file
+    elif asset.get("parse_function") == 'ansible':
+        parse_function = ansible_parser.parse_ansible_file
     else:
         logger.warning(f'Invalid parse function specified for asset type: {asset_type}')
         return asset_type, analysis_result  # Return immediately if no 'parse_function'
