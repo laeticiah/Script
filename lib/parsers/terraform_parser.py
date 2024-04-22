@@ -7,7 +7,8 @@ import hcl  # type: ignore
 
 # pylint: disable=invalid-name
 
-def parse_with_hcl2(file_content):
+
+def parse_with_hcl2(file_content: str):
     ''' parse using hcl2 '''
     try:
         return hcl2.loads(file_content), 2
@@ -44,14 +45,21 @@ def parse_terraform_file(file_content):
 
     # Convert the defaultdict to a regular dict for return
     resource_counts = dict(resource_counts)
-    # Prepare the output with a more descriptive key for the HCL version
-    output = {
-        "Resource Types and Counts": resource_counts,
-        "HCL Version": f"HCLv{version}" if version else "Unknown"
-    }
+
+    output = {}
+
+    # if resources exist, format and return them
+    if resource_counts:
+        # Prepare the output with a more descriptive key for the HCL version
+        output['Resource Types and Counts'] = resource_counts
+        output['HCL Version'] = f"HCLv{version}" if version else "Unknown"
+
     return output
+
 
 if __name__ == '__main__':
     script_path = r'resources/ec2.tf'
-    resources = parse_terraform_file(script_path)
+    with open(script_path, 'r') as file:  # pylint: disable=unspecified-encoding
+        script_contents = file.read()
+    resources = parse_terraform_file(script_contents)
     print(f'Resources being created: {resources}')

@@ -4,10 +4,12 @@
 __pycache__/
 
 # output files
-.csv
+*.csv
 
 # local debug/capture files
 t__*/
 t__*
 *.log
+.DS_Store
 .env
+fake_output_file

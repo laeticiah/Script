@@ -4,11 +4,17 @@ Cloudformation parser
 import json
 from collections import defaultdict
 from cfn_flip import to_json  # type: ignore
+from lib.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 # pylint: disable=invalid-name
 
-def parse_cloudformation_file(file_content):
+
+def parse_cloudformation_file(file_content: str):
     ''' parse cloudformation files '''
+    logger.debug("type file_contents: %s", type(file_content))
+    logger.debug("file_contents: %s", file_content)
     try:
         # Convert CloudFormation YAML to JSON with cfn_flip
         json_content = to_json(file_content)
@@ -31,5 +37,7 @@ def parse_cloudformation_file(file_content):
 
 if __name__ == '__main__':
     script_path = r'resources/cluster.yaml'
-    resources = parse_cloudformation_file(script_path)
+    with open(script_path, 'r') as file:  # pylint: disable=unspecified-encoding
+        script_contents = file.read()
+    resources = parse_cloudformation_file(script_contents)
     print(f'Resources being created: {resources}')

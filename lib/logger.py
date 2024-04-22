@@ -1,3 +1,4 @@
+"""Module to setup logging for a project"""
 import logging
 
 def setup_logger(name=__name__, log_level=logging.INFO):
@@ -18,9 +19,10 @@ def setup_logger(name=__name__, log_level=logging.INFO):
     f_handler = logging.FileHandler('logs.log')
 
     # Create formatters and add it to handlers
-    c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-    f_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    
+    c_format = logging.Formatter('[%(levelname)s] %(name)s.%(funcName)s:%(lineno)d - %(message)s')
+    f_format = logging.Formatter(
+        '%(asctime)s [%(levelname)s] %(name)s.%(funcName)s:%(lineno)d - %(message)s')
+
     c_handler.setFormatter(c_format)
     f_handler.setFormatter(f_format)
 

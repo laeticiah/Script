@@ -1,16 +1,24 @@
 '''
 GitHub Repository analysis
 '''
-from typing import List, Dict, Any, Optional
 import collections
-from github import Github, GithubException, Repository, ContentFile, Branch  # type: ignore
+import csv
+import inspect
+from multiprocessing import Pool
+from typing import Any, Dict, List, Optional, Union
 
-from lib.file_manager import process_and_analyze_file, create_match_function
+from github import (Branch, ContentFile, Github,
+                    GithubException, Repository)
+
+from lib.file_manager import (format_row_data,
+                              prepare_match_functions,
+                              process_and_analyze_file)
 from lib.logger import setup_logger
 
 # pylint: disable=line-too-long
 
 logger = setup_logger(__name__)
+
 
 def init_github(github_token: str, github_endpoint: str) -> Github:
     """
@@ -18,7 +26,9 @@ def init_github(github_token: str, github_endpoint: str) -> Github:
 
     Args:
         github_token: The user's Github personal access token.
-        github_endpoint: The endpoint of the Github Enterprise instance. Please replace hostname in https://hostname/api/v3/ with your GitHub Enterprise instance hostname.
+        github_endpoint: The endpoint of the Github Enterprise instance.
+        Please replace hostname in https://hostname/api/v3/ with your
+        GitHub Enterprise instance hostname.
 
     Returns:
         Github instance.
@@ -26,17 +36,15 @@ def init_github(github_token: str, github_endpoint: str) -> Github:
     return Github(base_url=github_endpoint, login_or_token=github_token)
 
 
-def extract_files_from_repo(repo: Repository.Repository, match_function: callable = lambda file: True) -> List[ContentFile.ContentFile]:
+def extract_files_from_repo(repo: Repository.Repository) -> List[ContentFile.ContentFile]:
     """
-    Extracts the list of files from the repository that match a specified condition.
+    Extracts the list of files from the repository.
 
     Args:
         repo: The Github Repository object
-        match_function: A callable that takes a Github File Content object
-            and returns True if the file should be included in the result
 
     Returns:
-        A list of Github File Content objects in the repo that match the specified condition
+        A list of Github File Content objects in the repo
 
     Raises:
         GithubException: If there's an error accessing the Github API
@@ -45,22 +53,21 @@ def extract_files_from_repo(repo: Repository.Repository, match_function: callabl
     queue = collections.deque([repo.get_contents("")])
 
     while queue:
-        file_content = queue.popleft()
+        file_content: Union[List[ContentFile.ContentFile], ContentFile.ContentFile] = queue.popleft()
 
         if isinstance(file_content, list):  # multiple 'content' items are received
             for file in file_content:
-                logger.info('processing: %s', file)
                 if file.type == "dir":
                     queue.extend(repo.get_contents(file.path))
-                elif match_function(file):
-                    matched_files.append(file)
-        else:  # single 'content' item
-            logger.info('processing: %s', file_content)
 
+                logger.debug('Adding file to all_files list: %s', f"{repo.full_name}/{file.path}")
+                matched_files.append(file)
+        else:  # single 'content' item
             if file_content.type == "dir":
                 queue.extend(repo.get_contents(file_content.path))
-            elif match_function(file_content):
-                matched_files.append(file_content)
+
+            logger.debug('Adding file to all_files list: %s', f"{repo.full_name}/{file_content.path}")
+            matched_files.append(file_content)
 
     return matched_files
 
@@ -81,10 +88,11 @@ def get_repo_metadata(a_repo: Repository.Repository) -> dict[str, Any]:
 
     _gh_languages: dict[str, int] = a_repo.get_languages()
     _languages: str = ' '.join(str(x) for x in _gh_languages.keys())
-    _labels: list[str] = [label.name for label in a_repo.get_labels()] # Changed _labels extraction to avoid possible key errors
+    _labels: list[str] = [label.name for label in a_repo.get_labels()]
     branch_meta: Branch.Branch = a_repo.get_branch(branch=a_repo.default_branch)
 
-    _protection: dict[str, Any] = branch_meta.raw_data.get("protection", {}) if 'protection' in branch_meta.raw_data else {}
+    _protection: dict[str, Any] = branch_meta.raw_data.get(
+        "protection", {}) if 'protection' in branch_meta.raw_data else {}
     _project_status: Optional[str] = _protection.get("enabled", None)
     _protection_enforcement_level: bool = _protection.get("required_status_checks", {}).get("enforcement_level", None)
 
@@ -112,7 +120,6 @@ def get_repo_metadata(a_repo: Repository.Repository) -> dict[str, Any]:
     min_metadata: dict[str, Any] = {
         "created_at": metadata.get('created_at'),
         "last_commit_on_default": metadata.get('last_commit_on_default'),
-        "languages": metadata.get('languages'),
         "branch_protection_status": metadata.get('branch_protection_status'),
         "branch_protection_enforcement_level": metadata.get('branch_protection_enforcement_level'),
         "archived": metadata.get('archived')
@@ -122,63 +129,109 @@ def get_repo_metadata(a_repo: Repository.Repository) -> dict[str, Any]:
     return min_metadata
 
 
-def format_row_data(a_repo: Repository.Repository, a_type: str, content: ContentFile, br_metadata: dict[str, Any], analysis) -> List[str]:
-    '''
-    Transforms raw row data into the final output format to be written out to a file
-    '''
-    formatted_row: list[str] = [
-        a_repo.full_name,
-        a_type,
-        content.path,
-        content.html_url,
-        br_metadata.get("created_at"),
-        br_metadata.get("last_commit_on_default"),
-        br_metadata.get('languages'),
-        br_metadata.get('branch_protection_status'),
-        br_metadata.get('branch_protection_enforcement_level'),
-        br_metadata.get('archived'),
-        analysis if analysis else "N/A"
-    ]
-    return formatted_row
+def retrieve_repos(github_client: Github, user_or_org: str, repository: Optional[str]) -> List[Repository.Repository]:
+    """Retrieves repositories based on user/org (paginated)."""
+    repos = []
+    try:
+        if "/" in user_or_org:  # Handle organization format (username/org)
+            org = user_or_org.split("/")
+            if repository:
+                repos.append(github_client.get_organization(org).get_repo(repository))
+            else:
+                for repo in github_client.get_organization(org).get_repos():
+                    repos.append(repo)  # Append individual repositories
+        else:
+            if repository:
+                repos.append(github_client.get_user(user_or_org).get_repo(repository))
+            else:
+                for repo in github_client.get_user(user_or_org).get_repos():
+                    repos.append(repo)  # Append individual repositories
+    except GithubException as e:
+        logger.error("Error retrieving repos for %s: %s", user_or_org, e)
+
+    if repos:
+        logger.info("Found %s repositories:", len(repos))
+        for repo in repos:
+            logger.info("\t- %s", repo.full_name)
+
+    return repos
 
 
-def analyze_repo(repo: Repository.Repository, config: List[Dict[str, Any]]):
-    """ Analyze a single Github repository based on a provided configuration """
+def analyze_repo(repo: Repository.Repository, match_functions: list[dict, Any], output_file):
+    """ Analyzes a single Github repository based on provided match functions.
+
+    This function iterates through all files in the repository and applies
+    the provided match functions to each file. If a match is found, it
+    processes and analyzes the file.
+    """
+
+    # logger.info("-----------------------------------------")
     logger.info("Processing repo: %s", repo.full_name)
+    # logger.info("-----------------------------------------")
+
+    logger.debug("match_function: %s", match_functions)
 
     # Extract metadata
-    branch_metadata: dict[str, Any] = get_repo_metadata(a_repo=repo)
+    branch_metadata: dict[str, Any]
+    try:
+        branch_metadata = get_repo_metadata(a_repo=repo)
+    except GithubException as e:
+        logger.error("Error getting GitHub metadata. Repository '%s'. Error: %s", repo.full_name, e)
+        branch_metadata = {}
 
-    # Pre-Fetch all files from repo
-    all_files = extract_files_from_repo(repo)
+    # Open CSV file (modify based on your CSV handling logic)
+    with open(output_file, 'a', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
 
-    config_with_match_functions = []
-    for asset in config:
-        # Check asset structure.
-        # If a certain asset is malformed in the configuration, don't break the loop, skip it.
-        if "matchType" not in asset or (asset['matchType']=='file' and "file_match" not in asset):
-            logger.warning("Asset structure is incorrect: %s", asset)
-            continue
+        # Loop over fetched files and configurations
+        for file_content in extract_files_from_repo(repo)[0:]:
+            # logger.info("-----------------------------------------")
+            logger.info("Analyzing file --> %s", f"{repo.full_name}/{file_content.path}")
+            # logger.info("-----------------------------------------")
+            for function in match_functions:
+                logger.debug("single match function: %s", function)
 
-        asset_with_match_function = asset.copy()
-        asset_with_match_function['match_function'] = create_match_function(asset=asset)
-        config_with_match_functions.append(asset_with_match_function)
+                match_function: dict = function['match_function']
+                args = function.get('args', ())  # Get optional arguments
+                parser = function.get('parser', None)
+                asset_type = function.get('asset_type', None)
 
-    full_data = []
-    for file_content in all_files:
-        for asset_with_match_function in config_with_match_functions:
-            if asset_with_match_function['match_function'](file_content):
-                try:
-                    # row_data = []
-                    asset_type, analysis_result = process_and_analyze_file(asset_with_match_function, file_content, repo)
-                    logger.info("Got Analysis Result: %s: %s", asset_type, analysis_result)
-                    row_data: List[str] = format_row_data(
-                        repo, asset_type, file_content, branch_metadata, analysis_result)
-                    full_data.append(row_data)
-                except GithubException as e:
-                    logger.error("Error processing repo %s: %s", repo.full_name, e)
-                    continue
-                except Exception as e:
-                    logger.error("Failed to process file %s: %s", file_content.path, str(e))
-                    continue
-    return full_data
+                logger.debug("inspect match_function: %s", inspect.getsource(function['match_function']))
+                logger.debug("Truthy - match_function(file_content, *args): %s", match_function(file_content, *args))
+
+                # if the file matches the file_type, process its contents for content matches
+                if match_function(file_content, *args):
+                    # even though there was a match, without a defined parser, can't analyze
+                    if parser is None:
+                        logger.error("Error analyzing matched file '%s'. No '%s' parser defined.",
+                                     f"{repo.full_name}/{file_content.path}", asset_type)
+                        continue
+
+                    try:
+                        analysis_result = process_and_analyze_file(
+                            parser, asset_type, file_content)
+                        if analysis_result is not None and analysis_result:
+                            logger.info("Got Analysis Result for '%s' (%s): %s",
+                                        f"{repo.full_name}/{file_content.path}", asset_type, analysis_result)
+                            row_data = format_row_data(
+                                repo, asset_type, file_content, branch_metadata, analysis_result)
+                            writer.writerow(row_data)
+
+                            # since the file was matched and parsed, stop looping through
+                            # any remaining potential match functions
+                            break
+
+                    except Exception as e:  # pylint: disable=broad-exception-caught
+                        logger.error("Failed to process file %s: %s", file_content.path, e)
+                        continue
+
+
+def process_repos(repos: List[Repository.Repository], config: Dict[str, Any], output_file):
+    """Processes repositories in parallel."""
+
+    match_functions = prepare_match_functions(config)
+    # Use a context manager for Pool
+    with Pool() as pool:
+        pool.starmap(analyze_repo, [(repo, match_functions, output_file) for repo in repos])
+
+    logger.info("Completed process_repos")

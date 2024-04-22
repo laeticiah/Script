@@ -1,101 +1,78 @@
-'''
-Main entry point to the crawler
-'''
+"""github crawler."""
+
+
 import argparse
-from multiprocessing import Pool
-from github import GithubException  # type: ignore
-from lib.github_manager import init_github, analyze_repo
+import csv
+from typing import Optional
+from github import GithubException, RateLimitExceededException
+
+from lib.github_manager import init_github, retrieve_repos, process_repos
 from lib.env_manager import load_env_var
-from lib.file_manager import load_config, create_csv_writer
+from lib.file_manager import load_config
 from lib.logger import setup_logger
 
 # pylint: disable=line-too-long
 
 logger = setup_logger(__name__)
 
-def process_repo(idx_repo_config):
-    '''
-    Processes GitHub repositories, pulling the metadata and parsing files
-    for configuration matches
 
-    Args:
-        idx_repo_config (tuple): Contains the repo # being processed, the repo
-        and the config file used for analysis
-
-    Returns:
-        _type_: _description_
-    '''
-    idx, repo, config = idx_repo_config
-    try:
-        logger.info("Processing repo #%s: %s", idx+1, repo.full_name)
-        result_row = analyze_repo(repo, config)
-        return result_row
-    except Exception as e:
-        logger.error('Error while processing repository: %s, %s', repo, e)
-        return []
-
-
-def main(user_or_org, config_file, output_file, gh_endpoint):
+def main(config_path: str, user_or_org: str, output_file: str, gh_endpoint: str, repository: Optional[str]):
     """Run the script."""
+
     try:
-        gh_token = load_env_var('GH_TOKEN')
+        # Get Github token
+        gh_token = load_env_var("GH_TOKEN")
         g = init_github(gh_token, gh_endpoint)
-        repos = g.get_user(user_or_org).get_repos()
-    except GithubException:
-        repos = g.get_organization(user_or_org).get_repos()
 
-    # if there are repos, proceed, otherwise exit
-    if repos.totalCount > 0:
-        logger.info('%s repos found for User or Org %s. Beginning processing.', repos.totalCount, user_or_org)
-    else:
-        logger.info('No repos found for User or Org %s. Nothing to process so ending.', user_or_org)
-        return
+        config = load_config(config_path)
+        if not config:
+            return
 
-    config = load_config(config_file)
-    repos_list = enumerate(list(repos))
+        headers = config.get('headers')
+        config_assets = config.get('assets')
 
-    # Create a Pool of subprocesses
-    with Pool() as pool:
-        result_rows = pool.map(process_repo, [(idx, repo, config) for idx, repo in repos_list])
+        # Retrieve repositories
+        repos = retrieve_repos(g, user_or_org, repository)
 
-    logger.debug('Pools --> # of result_rows: %s', len(result_rows) if result_rows is not None else None)
-    logger.debug('Pools --> result_rows: %s', result_rows)
+        if not repos:
+            logger.info("No repos found for '%s'. Exiting.", user_or_org)
+            return
 
-    # After all the multiprocessing is done, write to csv
-    writer = create_csv_writer(output_file)
+        logger.info("")
+        logger.info("Starting to process %s repos ...", len(list(repos)))
+        # Open CSV file for appending (modify based on your CSV handling logic)
+        with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            # Write header row
+            writer.writerow(headers)
 
-    # write headers to the csv file
-    row_headers: list[str] = [
-        "Repository", "Type", "File Path", "URL", "Created On", "Last Commit",
-        "Languages", "Branch Protection", "Required Checks Enforcement Level",
-        "Repo Archived", "Analysis Result"
-    ]
-    writer.writerow(row_headers)
+        # Process the repos
+        process_repos(repos, config_assets, output_file)
 
-    # write out the results
-    for idx, result_row in enumerate(result_rows):
-        if result_row is not None: # and len(result_row) == len(row_headers):
-            logger.debug('result_row #%s: %s', idx+1, result_row)
-            try:
-                if isinstance(result_row[0], list):
-                    writer.writerows(result_row)
-                else:
-                    writer.writerow(result_row)
-            except Exception as e:
-                logger.error('Error while writing to file: %s', e)
-        else:
-            logger.warning('ISSUE with result_row #%s, will not output to file. result_row: %s', idx+1, result_row)
+        logger.info("Completed processing repos.")
 
-    logger.info("Completed processing %s repos.", repos.totalCount)
+    except RateLimitExceededException as e:
+        logger.error("Github API rate limit exceeded: %s", e)
+    except GithubException as e:
+        logger.error("An error occurred accessing Github: %s", e)
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Script to identify devops assets in github')
-    parser.add_argument('user_or_org', help='Name of the Github Identity to target', default='stelligent')
-    parser.add_argument('config_file', help='Config file to use of assets to match', default='config.yaml')
-    parser.add_argument('output_file', help='Name of the file to write out', default='identified_assets.csv')
-    parser.add_argument(
-        'gh_endpoint', help='Hostname for your GitHub Enterprise instance - https://github.com/api/v3', default='https://api.github.com')
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Script to identify DevOps assets in GitHub")
+    parser.add_argument("user_or_org",
+                        help="Name of the Github user or organization to target")
+    parser.add_argument("config_path",
+                        help="Path to the configuration file (config.yaml)")
+    parser.add_argument("output_file",
+                        help="Name of the file to write out the identified assets")
+    parser.add_argument("gh_endpoint",
+                        help="api endpoint for github",
+                        default="https://api.github.com")
+    parser.add_argument("-r", "--repo",
+                        help="The name of a specific GitHub repository to analyze",
+                        dest="repository",
+                        required=False)
     args = parser.parse_args()
 
-    main(args.user_or_org, args.config_file, args.output_file, args.gh_endpoint)
-    logger.info("devops assets written to %s!", args.output_file)
+    main(args.config_path, args.user_or_org, args.output_file, args.gh_endpoint, args.repository)
+    logger.info("Devops assets written to '%s'!", args.output_file)

@@ -1,168 +1,222 @@
-from github import ContentFile, Repository # type: ignore
+"""Module providing file handling utils"""
+
 import csv
 import fnmatch
-import yaml # type: ignore
+from typing import Any, Callable, Dict, List
 
-from lib.parsers import cloudformation_parser, terraform_parser, boto3_parser, pshell_parser, shell_parser, ansible_parser
+# import chardet
+import yaml
+from github import ContentFile, Repository
+
 from lib.logger import setup_logger
+from lib.parsers import (
+    ansible_parser,
+    boto3_parser,
+    cloudformation_parser,
+    pshell_parser,
+    shell_parser,
+    terraform_parser,
+    js_parser
+)
 
+# pylint: disable=line-too-long
 
 logger = setup_logger(__name__)
 
 
-def load_config(config_file: str) -> dict:
+def load_config(config_path: str):
     """
     Load configuration parameters from a YAML file.
-
-    Args:
-        config_file: The path to the configuration file.
-
-    Returns:
-        Dictionary containing the configurations.
     """
-    with open(config_file,'r') as conf_file:
-        config = yaml.safe_load(conf_file)
-
-    return config
-
-
-def write_to_csv(writer: csv.writer, repo_row_data: list):
-    """
-    Writes information into the CSV.
-
-    Args:
-        writer: CSV writer instance.
-        repo_row_data: List with repository information to write.
-
-    """
-    writer.writerow(repo_row_data)
+    try:
+        with open(config_path, 'r', encoding='utf-8') as stream:
+            raw = yaml.safe_load(stream)
+        return raw
+    except yaml.YAMLError as e:
+        print(f"Error loading config: {e}")
+        return None
 
 
 def create_csv_writer(file_path: str):
     """
     Return a CSV writer instance for the given file path.
-    
+
     Args:
         file_path: Path to the CSV file.
 
     Returns:
         CSV writer instance.
     """
-    file = open(file_path, mode='w', newline='', encoding='utf-8')
-    writer = csv.writer(file)
-    return writer
+    with open(file_path, mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        return writer
 
 
-def match_file(file_name: str, file_match: str) -> bool:
-    return fnmatch.fnmatch(file_name, file_match)
+def format_row_data(a_repo: Repository.Repository,
+                    a_type: str,
+                    content: ContentFile,
+                    br_metadata: dict[str, Any], analysis) -> List[str]:
+    '''
+    Transforms raw row data into the final output format to be written out to a file
+    '''
+    formatted_row: list[str] = [
+        a_repo.full_name,
+        a_type,
+        content.path,
+        content.html_url,
+        br_metadata.get("created_at"),
+        br_metadata.get("last_commit_on_default"),
+        br_metadata.get('branch_protection_status'),
+        br_metadata.get('branch_protection_enforcement_level'),
+        br_metadata.get('archived'),
+        analysis if analysis else "N/A"
+    ]
+    return formatted_row
 
 
-def match_content(file_content: ContentFile.ContentFile, content_match: list) -> bool:
-    decoded_content = decode_content(file_content)
-    return any(match in decoded_content for match in content_match)
-
-
-def decode_content(file_content: ContentFile.ContentFile) -> str:
+def match_file(file_content: ContentFile.ContentFile, file_match: str, _) -> bool:  # pylint: disable=unused-argument
     """
-    Decodes the file content.
+    Checks that the file name matches a specified pattern
 
     Args:
-        file_content: Github File Content to decode.
+        file_content: A ContentFile object containing the file content.
+        file_match:   A file name pattern to match the name against.
 
     Returns:
-        A string representing the decoded content of the file.
+        True if any match is found, False otherwise.
+
     """
-    encodings = [
-    'ascii', 'big5', 'big5hkscs', 'cp037', 'cp273', 'cp424', 'cp437', 'cp500', 'cp720',
-    'cp737', 'cp775', 'cp850', 'cp852', 'cp855', 'cp856', 'cp857', 'cp858', 'cp860',
-    'cp861', 'cp862', 'cp863', 'cp864', 'cp865', 'cp866', 'cp869', 'cp874', 'cp875',
-    'cp932', 'cp949', 'cp950', 'cp1006', 'cp1026', 'cp1125', 'cp1140', 'cp1250',
-    'cp1251', 'cp1252', 'cp1253', 'cp1254', 'cp1255', 'cp1256', 'cp1257', 'cp1258',
-    'cp65001', 'euc_jp', 'euc_jis_2004', 'euc_jisx0213', 'euc_kr', 
-    'gb2312', 'gbk', 'gb18030', 'hz', 'iso2022_jp', 'iso2022_jp_1', 'iso2022_jp_2',
-    'iso2022_jp_2004', 'iso2022_jp_3', 'iso2022_jp_ext', 'iso2022_kr', 
-    'latin_1', 'iso8859_2', 'iso8859_3', 'iso8859_4', 'iso8859_5', 'iso8859_6',
-    'iso8859_7', 'iso8859_8', 'iso8859_9', 'iso8859_10', 'iso8859_11', 'iso8859_13',
-    'iso8859_14', 'iso8859_15', 'iso8859_16', 'johab', 'koi8_r', 'koi8_t', 'koi8_u',
-    'kz1048', 'mac_cyrillic', 'mac_greek', 'mac_iceland', 'mac_latin2', 'mac_roman',
-    'mac_turkish', 'ptcp154', 'shift_jis', 'shift_jis_2004', 'shift_jisx0213',
-    'utf_32', 'utf_32_be', 'utf_32_le', 'utf_16', 'utf_16_be', 'utf_16_le', 
-    'utf_7', 'utf_8', 'utf_8_sig']
+    logger.debug("File name: %s", file_content.name)
+    logger.debug("File name match pattern: %s", file_match)
+    try:
+        return fnmatch.fnmatch(file_content.name, file_match)
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.error("Failed to process file %s: %s", file_content.path, e)
+        return False
 
-    for encoding in encodings:
-        if encoding is None:  # If encoding is None, continue to next encoding
-            continue
-        try:
-            decoded_content = file_content.decoded_content.decode(encoding)
-            return decoded_content
-        except UnicodeDecodeError:
-            continue  # Try the next encoding
-        except Exception as ex:
-            print(f"Exception occurred with encoding '{encoding}': {ex}")
-            continue  # Skip to the next encoding
-    
-    # If all provided encodings failed, decode with error ignored.
-    decoded_content = file_content.decoded_content.decode('utf-8', 'ignore')
 
-    return decoded_content
+def match_content(file_content: ContentFile.ContentFile, file_match: str, content_match: list) -> bool:
+    """
+    This function checks that the file name matches a specified pattern and then
+    attempts to decode the content of a ContentFile object, which is then checked
+    for matches with any of the provided strings in content_match.
+
+    Args:
+        file_content  (obj): A ContentFile object containing the file content.
+        file_match    (str):   A file name pattern to match the name against.
+        content_match (list): A list of strings to match against the decoded content.
+
+    Returns:
+        True if any match is found, False otherwise.
+    """
+    logger.debug("File name: %s", file_content.name)
+    logger.debug("Filename match pattern: %s", file_match)
+    logger.debug("Content match patterns: %s", content_match)
+    try:
+        if fnmatch.fnmatch(file_content.name, file_match):
+            content = file_content.decoded_content.decode('utf-8')
+            logger.debug("content: %s", content)
+            if content is not None:
+                return any(match in content for match in content_match)
+        return False
+    except (UnicodeDecodeError, AttributeError):
+        # Handle cases where decoding fails or encoding is not available
+        logger.warning("Failed to decode content for file: %s", file_content.name)
+        return False
+
 
 def create_match_function(asset: dict):
     """
     Creates a match function for a given asset.
-    
+
     Args:
         asset: The configurations for the parse function and match type.
 
     Returns:
-        A callable that takes a Github File Content object and
-        returns True if the file or its content matches the asset configuration.
+        A dictionary containing the match function, its arguments, associated parser and match_type.
     """
-    if asset['matchType'] == 'file':
-        return lambda file_content: match_file(file_content.path, asset['file_match'])
-    elif asset['matchType'] == 'content':
-        return lambda file_content: match_content(file_content, asset['content_match'])
-    return lambda file_content: False
+    asset_type: str = asset.get('type')
+    match_type = asset.get('matchType', None)
+    parser = asset.get('parse_function', None)
+
+    if match_type == 'file':
+        file_match_fn = {'match_function': match_file, 'args': (
+            asset.get('file_match'), None,), 'parser': parser, 'asset_type': asset_type}
+        logger.debug("match_file file_match_fn: %s", file_match_fn)
+        return file_match_fn
+
+    if asset.get('matchType') == 'content':
+        content_match_fn = {'match_function': match_content, 'args': (asset.get('file_match'),
+                                                                      asset.get('content_match', []),), 'parser': parser, 'asset_type': asset_type}
+        logger.debug("match_content content_match_fn: %s", content_match_fn)
+        return content_match_fn
+
+    return {'match_function': lambda file_content: False, 'args': (), 'parser': None, 'asset_type': None}
 
 
-def process_and_analyze_file(asset: dict, file_content: ContentFile.ContentFile, repo: Repository.Repository) -> dict:
+def prepare_match_functions(config: List[Dict[str, Any]]) -> List[Callable[[ContentFile.ContentFile], bool]]:
+    """
+    Prepares match functions from a list of asset configurations.
+
+    This function iterates through the configurations and creates a list of
+    callable match functions directly.
+
+    Args:
+        config: A list of dictionaries containing asset configurations.
+
+    Returns:
+        A list of callable match functions.
+    """
+    match_functions = []
+    for asset in config:
+        match_functions.append(create_match_function(asset))
+
+    logger.debug("match_function: %s", match_functions)
+    return match_functions
+
+
+def process_and_analyze_file(parser: str,
+                             asset_type: str,
+                             file_content: ContentFile.ContentFile):
     """
     Process and analyze a given file based on the asset configurations.
 
     Args:
-        asset: The configurations for the parse function and match type.
+        parser: The parse function
         file_content: Github File Content to be analyzed.
         repo: Github Repository object where the file content is from.
 
     Returns:
         asset_type: A string that describes the type of asset.
-        analysis_result: A string representing the result from the parse function.
+        analysis_result: A string representing the result from the parse function,
+                         or None if there's an error.
     """
-    analysis_result = "N/A"  
-    asset_type = asset["type"]
-    logger.debug(f"asset_type: {asset_type}")
+    logger.debug("parser: %s, match_type: %s", parser, asset_type)
 
-    if asset.get("parse_function") == 'cloudformation':
-        parse_function = cloudformation_parser.parse_cloudformation_file
-    elif asset.get("parse_function") == 'terraform':
-        parse_function = terraform_parser.parse_terraform_file
-    elif asset.get("parse_function") == 'boto3':
-        parse_function = boto3_parser.parse_boto3_file
-    elif asset.get("parse_function") == 'powershell':
-        parse_function = pshell_parser.parse_powershell_file
-    elif asset.get("parse_function") == 'shell':
-        parse_function = shell_parser.parse_shell_file
-    elif asset.get("parse_function") == 'ansible':
-        parse_function = ansible_parser.parse_ansible_file
-    else:
-        logger.warning(f'Invalid parse function specified for asset type: {asset_type}')
-        return asset_type, analysis_result  # Return immediately if no 'parse_function'
+    # Use a dictionary for parsers
+    parsers = {
+        'ansible': ansible_parser.parse_ansible_file,
+        'boto3': boto3_parser.parse_boto3_file,
+        'cloudformation': cloudformation_parser.parse_cloudformation_file,
+        'powershell': pshell_parser.parse_powershell_file,
+        'shell': shell_parser.parse_shell_file,
+        'terraform': terraform_parser.parse_terraform_file,
+        'javascript': js_parser.parse_js_file,
+    }
 
-    if callable(parse_function): 
-        logger.debug(f"raw_content: {file_content}")
-        decoded_content = decode_content(file_content)
-        analysis_result = parse_function(decoded_content)
-        logger.debug(f"analysis_result: {analysis_result}")
+    parse_function = parsers.get(parser)
+    logger.debug("parse_function: %s", parse_function)
+    if not parse_function:
+        logger.warning('Invalid parse function specified for asset type: %s', asset_type)
+        return None  # Or raise an exception
 
-    logger.info(f"Matched file found: {file_content.path} in {repo.full_name}")
+    if not callable(parse_function):
+        logger.error('Parser for asset type %s is not callable', asset_type)
+        return None  # Or raise an exception
 
-    return asset_type, analysis_result
+    # logger.debug("raw_content: %s", file_content)
+    decoded_content = file_content.decoded_content.decode()
+    analysis_result = parse_function(decoded_content)
+    logger.debug("analysis_result: %s", analysis_result)
+
+    return analysis_result

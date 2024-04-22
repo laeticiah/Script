@@ -1,254 +1,246 @@
-# - "type": "CI Configuration"
-#   "file_match": ".github/workflows/*.yml"
-#   "content_match":
-#     - "actions/checkout@v2"
-#     - "actions/setup-python@v2"
-#   "matchType": "content"
-- "type": "Terraform"
-  "file_match": "**/*.tf"
-  "matchType": "file"
-  "parse_function": "terraform"
-- "type": "Cloudformation (CFN)"
-  "content_match":
-    - "AWSTemplateFormatVersion:"
-  "matchType": "content"
-  "parse_function": "cloudformation"
-- "type": "Cloudformation (CFN)"
-  "file_match": "**/*.json"
-  "matchType": "file"
-  "parse_function": "cloudformation"
-- "type": "Cloudformation (CFN)"
-  "file_match": "**/*.yml"
-  "matchType": "file"
-  "parse_function": "cloudformation"
-- "type": "Cloudformation (CFN)"
-  "file_match": "**/*.yaml"
-  "matchType": "file"
-  "parse_function": "cloudformation"
-# - "type": "JavaScript (Node.js)"
-#   "file_match": "**/*.js"
-#   "content_match":
-#     - "express"
-#     - "mongoose"
-#   "matchType": "content"
-- "type": "Python"
-  "file_match": "**/*.py"
-  "content_match":
-    - "import aws"
-    - "import aws-cdk"
-    - "import boto3"
-  "matchType": "content"
-  "parse_function": "boto3"
-- "type": "Shell"
-  "file_match": "**/*.sh"
-  "content_match":
-    - "apt-get install"
-    - "chmod +x"
-  "matchType": "content"
-- "type": "PowerShell"
-  "file_match": "**/*.ps1"
-  "content_match":
-    - "Install-Module"
-    - "New-Item"
-  "matchType": "content"
-#- "type": "YAML (Ansible)"
-#   "file_match": "**/*.yml"
-#   "content_match":
-#     - "name: "
-#     - "tasks:"
-#   "matchType": "content"
-- "type": "Ansible"
-  "file_match": "**/*.yaml"
-  "content_match":
-    - "name: "
-    - "tasks:"
-  "matchType": "content"
-# - "type": "Java"
-#   "file_match": "**/*.java"
-#   "content_match":
-#     - "import java."
-#     - "public class"
-#   "matchType": "content"
-# - "type": "HTML"
-#   "file_match": "**/*.html"
-#   "content_match":
-#     - "<html>"
-#     - "<body>"
-#   "matchType": "content"
-# - "type": "CSS"
-#   "file_match": "**/*.css"
-#   "content_match":
-#     - "font-family:"
-#     - "color:"
-#   "matchType": "content"
-# - "type": "XML/XSLT"
-#   "file_match": "**/*.xml"
-#   "content_match":
-#     - "<?xml version="
-#     - "<xsl:stylesheet"
-#   "matchType": "content"
-# - "type": "SQL (T-SQL, PLSQL, HiveQL, PLpgSQL)"
-#   "file_match": "**/*.sql"
-#   "content_match":
-#     - "SELECT"
-#     - "CREATE TABLE"
-#   "matchType": "content"
-# - "type": "Dockerfile"
-#   "file_match": "**/Dockerfile"
-#   "content_match":
-#     - "FROM"
-#     - "RUN"
-#   "matchType": "content"
-# - "type": "C#"
-#   "file_match": "**/*.cs"
-#   "matchType": "file"
-# - "type": "JavaScript"
-#   "file_match": "**/*.js"
-#   "matchType": "file"
-# - "type": "Apex"
-#   "file_match": "**/*.cls"
-#   "matchType": "file"
-# - "type": "Java"
-#   "file_match": "**/*.java"
-#   "matchType": "file"
-# - "type": "HTML"
-#   "file_match": "**/*.html"
-#   "matchType": "file"
-# - "type": "Visual Basic .NET"
-#   "file_match": "**/*.vb"
-#   "matchType": "file"
-# - "type": "Terraform"
-#   "file_match": "**/*.tf"
-#   "matchType": "file"
-- "type": "Ansible"
-  "file_match": "**/*.yml"
-  "matchType": "file"
-# - "type": "Chef"
-#   "file_match": "**/*.rb"
-#   "matchType": "file"
-# - "type": "Jenkins"
-#   "file_match": "**/*.groovy"
-#   "matchType": "file"
-# - "type": "Spring Cloud"
-#   "file_match": "**/*.java"
-#   "matchType": "file"
-# - "type": "PowerShell"
-#   "file_match": "**/*.ps1"
-#   "matchType": "file"
-- "type": "Python"
-  "file_match": "**/*.py"
-  "matchType": "file"
-# - "type": "Shell"
-#   "file_match": "**/*.sh"
-#   "matchType": "file"
-# - "type": "TypeScript"
-#   "file_match": "**/*.ts"
-#   "matchType": "file"
-# - "type": "VBA"
-#   "file_match": "**/*.vba"
-#   "matchType": "file"
-# - "type": "T-SQL"
-#   "file_match": "**/*.sql"
-#   "matchType": "file"
-# - "type": "XSLT"
-#   "file_match": "**/*.xslt"
-#   "matchType": "file"
-# - "type": "C"
-#   "file_match": "**/*.c"
-#   "matchType": "file"
-# - "type": "CSS"
-#   "file_match": "**/*.css"
-#   "matchType": "file"
-# - "type": "Dockerfile"
-#   "file_match": "**/Dockerfile"
-#   "matchType": "file"
-# - "type": "ASP.NET"
-#   "file_match": "**/*.aspx"
-#   "matchType": "file"
-# - "type": "Batchfile"
-#   "file_match": "**/*.bat"
-#   "matchType": "file"
-# - "type": "COBOL"
-#   "file_match": "**/*.cob"
-#   "matchType": "file"
-# - "type": "Groovy"
-#   "file_match": "**/*.groovy"
-#   "matchType": "file"
-# - "type": "Perl"
-#   "file_match": "**/*.pl"
-#   "matchType": "file"
-# - "type": "PLSQL"
-#   "file_match": "**/*.sql"
-#   "matchType": "file"
-# - "type": "R"
-#   "file_match": "**/*.r"
-#   "matchType": "file"
-# - "type": "Roff"
-#   "file_match": "**/*.roff"
-#   "matchType": "file"
-# - "type": "Scala"
-#   "file_match": "**/*.scala"
-#   "matchType": "file"
-# - "type": "C++"
-#   "file_match": "**/*.cpp"
-#   "matchType": "file"
-# - "type": "Classic ASP"
-#   "file_match": "**/*.asp"
-#   "matchType": "file"
-# - "type": "Gherkin"
-#   "file_match": "**/*.feature"
-#   "matchType": "file"
-# - "type": "Objective-C"
-#   "file_match": "**/*.m"
-#   "matchType": "file"
-# - "type": "Rebol"
-#   "file_match": "**/*.reb"
-#   "matchType": "file"
-# - "type": "SCSS"
-#   "file_match": "**/*.scss"
-#   "matchType": "file"
-# - "type": "Swift"
-#   "file_match": "**/*.swift"
-#   "matchType": "file"
-# - "type": "Visual Basic"
-#   "file_match": "**/*.vb"
-#   "matchType": "file"
-# - "type": "Rich Text Format"
-#   "file_match": "**/*.rtf"
-#   "matchType": "file"
-# - "type": "HiveQL"
-#   "file_match": "**/*.q"
-#   "matchType": "file"
-# - "type": "Smatty"
-#   "file_match": "**/*.sm"
-#   "matchType": "file"
-# - "type": "IDL"
-#   "file_match": "**/*.idl"
-#   "matchType": "file"
-# - "type": "Raku"
-#   "file_match": "**/*.raku"
-#   "matchType": "file"
-# - "type": "TeX"
-#   "file_match": "**/*.tex"
-#   "matchType": "file"
-# - "type": "Tcl"
-#   "file_match": "**/*.tcl"
-#   "matchType": "file"
-# - "type": "PLpgSQL"
-#   "file_match": "**/*.sql"
-#   "matchType": "file"
-# - "type": "Matlab"
-#   "file_match": "**/*.mat"
-#   "matchType": "file"
-# - "type": "Jupyter Notebook"
-#   "file_match": "**/*.ipynb"
-#   "matchType": "file"
-# - "type": "Makefile"
-#   "file_match": "**/Makefile"
-#   "matchType": "file"
-# - "type": "HCL"
-#   "file_match": "**/*.hcl"
-#   "matchType": "file"
-# - "type": "Ruby"
-#   "file_match": "**/*.rb"
-#   "matchType": "file"
+headers:
+  - Repository
+  - Type
+  - File Name
+  - URL
+  - Created On
+  - Last Commit
+  - Branch Protection
+  - Required Checks Enforcement Level
+  - Repo Archived
+  - Analysis Result
+assets:
+  - type: Terraform
+    file_match: '*.tf'
+    matchType: file
+    parse_function: terraform
+  - type: Cloudformation (CFN)
+    file_match: '*.yml'
+    matchType: content
+    content_match:
+      - 'AWSTemplateFormatVersion:'
+    parse_function: cloudformation
+  - type: Cloudformation (CFN)
+    file_match: '*.yaml'
+    matchType: content
+    content_match:
+      - 'AWSTemplateFormatVersion:'
+    parse_function: cloudformation
+  - type: Python
+    file_match: '*.py'
+    matchType: content
+    content_match:
+      - 'import aws'
+      - 'import aws-cdk'
+      - 'import boto3'
+    parse_function: boto3
+  - type: PowerShell
+    file_match: '*.ps1'
+    matchType: content
+    content_match:
+      - Install-Module -Name AWSPowerShell
+      - AWSPowerShell
+    parse_function: powershell
+  - type: Shell
+    file_match: '*.sh'
+    matchType: content
+    content_match:
+      - aws
+    parse_function: shell
+  - type: YAML (Ansible)
+    file_match: '*.yml'
+    matchType: content
+    content_match:
+      - 'name:'
+      - 'amazon.aws.'
+      - 'community.aws.'
+    parse_function: ansible
+  - type: YAML (Ansible)
+    file_match: '*.yaml'
+    matchType: content
+    content_match:
+      - 'name:'
+      - 'amazon.aws.'
+      - 'community.aws.'
+    parse_function: ansible
+  - type: JavaScript
+    file_match: '*.js'
+    matchType: content
+    content_match:
+      - 'aws-sdk'
+      - 'import aws'
+    parse_function: javascript # not ES5
+  - type: TypeScript
+    file_match: '*.ts'
+    matchType: content
+    content_match:
+      - 'aws-sdk'
+      - 'import aws'
+    parse_function: javascript
+  # - type: Cloudformation (CFN)
+  #   file_match: '*.json'
+  #   matchType: content
+  #   content_match:
+  #     - 'AWSTemplateFormatVersion:'
+  #   parse_function: cloudformation
+  # - type: Chef
+  #   file_match: '*.rb'
+  #   matchType: content
+  #   content_match:
+  #     - 'AwsCookbook'
+  # - type: C++
+  #   file_match: '*.cpp'
+  #   matchType: content
+  #   content_match:
+  #     - 'include <aws/core/Aws.h>'
+  # - type: Ruby
+  #   file_match: '*.rb'
+  #   matchType: content
+  #   content_match:
+  #     - 'aws-sdk-'
+  # - type: Java
+  #   file_match: '*.java'
+  #   matchType: content
+  #   content_match:
+  #     - public class
+  #     - 'import com.amazonaws.'
+  # - type: Jenkins
+  #   file_match: '*.groovy'
+  #   matchType: file
+  # - type: Spring Cloud
+  #   file_match: '*.java'
+  #   matchType: file
+  # - type: Dockerfile
+  #   file_match: 'Dockerfile'
+  #   matchType: content
+  #   content_match:
+  #     - FROM
+  #     - RUN
+  # - type: C#
+  #   file_match: '*.cs'
+  #   matchType: file
+  # - type: C
+  #   file_match: '*.c'
+  #   matchType: file
+  # - type: Makefile
+  #   file_match: 'Makefile'
+  #   matchType: file
+  # - type: HCL
+  #   file_match: '*.hcl'
+  #   matchType: file
+#######
+# - type: HTML
+#   file_match: '*.html'
+#   matchType: file
+# - type: CI Configuration
+#   file_match: .github/workflows/*.yml
+#   matchType: content
+#   content_match:
+#     - actions/checkout
+# - type: CSS
+#   file_match: '*.css'
+#   matchType: content
+#   content_match:
+#     - font-family:
+#     - color:
+# - type: XML/XSLT
+#   file_match: '*.xml'
+#   matchType: content
+#   content_match:
+#     - <?xml version=
+#     - <xsl:stylesheet
+# - type: SQL (T-SQL, PLSQL, HiveQL, PLpgSQL)
+#   file_match: '*.sql'
+#   matchType: content
+#   content_match:
+#     - SELECT
+#     - CREATE TABLE
+
+# - type: Apex
+#   file_match: '*.cls'
+#   matchType: file
+# - type: Visual Basic .NET
+#   file_match: '*.vb' # need to check the file content
+#   matchType: file
+# - type: VBA
+#   file_match: '*.vba'
+#   matchType: file
+# - type: XSLT
+#   file_match: '*.xslt'
+#   matchType: file
+
+# - type: ASP.NET
+#   file_match: '*.aspx'
+#   matchType: file
+# - type: Batchfile
+#   file_match: '*.bat'
+#   matchType: file
+# - type: COBOL
+#   file_match: '*.cob'
+#   matchType: file
+# - type: Perl
+#   file_match: '*.pl'
+#   matchType: file
+# - type: PLSQL
+#   file_match: '*.sql'
+#   matchType: file
+# - type: R
+#   file_match: '*.r'
+#   matchType: file
+# - type: Roff
+#   file_match: '*.roff'
+#   matchType: file
+# - type: Scala
+#   file_match: '*.scala'
+#   matchType: file
+# - type: Classic ASP
+#   file_match: '*.asp'
+#   matchType: file
+# - type: Gherkin
+#   file_match: '*.feature'
+#   matchType: file
+# - type: Objective-C
+#   file_match: '*.m'
+#   matchType: file
+# - type: Rebol
+#   file_match: '*.reb'
+#   matchType: file
+# - type: SCSS
+#   file_match: '*.scss'
+#   matchType: file
+# - type: Swift
+#   file_match: '*.swift'
+#   matchType: file
+# - type: Visual Basic
+#   file_match: '*.vb'
+#   matchType: file
+# - type: Rich Text Format
+#   file_match: '*.rtf'
+#   matchType: file
+# - type: HiveQL
+#   file_match: '*.q'
+#   matchType: file
+# - type: Smatty
+#   file_match: '*.sm'
+#   matchType: file
+# - type: IDL
+#   file_match: '*.idl'
+#   matchType: file
+# - type: Raku
+#   file_match: '*.raku'
+#   matchType: file
+# - type: TeX
+#   file_match: '*.tex'
+#   matchType: file
+# - type: Tcl
+#   file_match: '*.tcl'
+#   matchType: file
+# - type: PLpgSQL
+#   file_match: '*.sql'
+#   matchType: file
+# - type: Matlab
+#   file_match: '*.mat'
+#   matchType: file
+# - type: Jupyter Notebook
+#   file_match: '*.ipynb'
+#   matchType: file

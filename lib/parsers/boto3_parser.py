@@ -1,10 +1,23 @@
+'''
+Python boto3 parser
+'''
 import ast
 
-def parse_boto3_file(script_path):
-    with open(script_path, 'r') as file:
-        script = file.read()
+# pylint: disable=invalid-name,line-too-long
 
-    tree = ast.parse(script)
+
+def parse_boto3_file(file_contents: str):
+    '''
+    Searches a python file for boto3 commands manipulating aws resources
+
+    Args:
+        file_contents (str): The file to be parsed
+
+    Returns:
+        list: Matching aws resource action events
+    '''
+
+    tree = ast.parse(file_contents)
     resource_creations = []
 
     for node in ast.walk(tree):
@@ -18,6 +31,8 @@ def parse_boto3_file(script_path):
     return resource_creations
 
 if __name__ == '__main__':
-    script_path = r'resources/boto3-script.py'
-    resources = parse_boto3_file(script_path)
+    script_path = r'resources/boto3_script.py'
+    with open(script_path, 'r') as file:  # pylint: disable=unspecified-encoding
+        script_contents = file.read()
+    resources = parse_boto3_file(script_contents)
     print(f'Resources being created: {resources}')
