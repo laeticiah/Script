@@ -232,6 +232,10 @@ def process_repos(repos: List[Repository.Repository], config: Dict[str, Any], ou
     match_functions = prepare_match_functions(config)
     # Use a context manager for Pool
     with Pool() as pool:
-        pool.starmap(analyze_repo, [(repo, match_functions, output_file) for repo in repos])
+        #pool.starmap(analyze_repo, [(repo, match_functions, output_file) for repo in repos])
+
+        ## Uncomment the line below to test with a single repo (e.g. 'test-78') and comment the line above
+
+        pool.starmap(analyze_repo, [(repo, match_functions, output_file) for repo in repos if repo.name == 'aws-chef'])
 
     logger.info("Completed process_repos")
