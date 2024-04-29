@@ -17,11 +17,16 @@ def parse_cloudformation_file(file_content: str):
     logger.debug("file_contents: %s", file_content)
     try:
         # Convert CloudFormation YAML to JSON with cfn_flip
-        json_content = to_json(file_content)
+        try:
+            json_content = to_json(file_content)
+        except Exception as e:   # pylint: disable=broad-exception-caught
+            json_content = file_content
         # load JSON formatted CloudFormation files
         parsed_content = json.loads(json_content)
-    except Exception as e:
-        raise Exception("Error parsing CloudFormation file: %s", str(e))
+    except Exception as e:   # pylint: disable=broad-exception-caught
+        logger.error("Error parsing CloudFormation file: %s", str(e))
+        return {}
+        # raise Exception("Error parsing CloudFormation file: %s", str(e))
 
     # Initialize a dictionary to count the types of resources
     resource_counts = defaultdict(int)
@@ -34,6 +39,7 @@ def parse_cloudformation_file(file_content: str):
     # Convert the defaultdict to a regular dict for return
     resource_counts = dict(resource_counts)
     return resource_counts
+
 
 if __name__ == '__main__':
     script_path = r'resources/cluster.yaml'
