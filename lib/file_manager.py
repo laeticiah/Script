@@ -16,7 +16,9 @@ from lib.parsers import (
     pshell_parser,
     shell_parser,
     terraform_parser,
-    js_parser
+    js_parser,
+    java_parser,
+    ruby_parser,
 )
 
 # pylint: disable=line-too-long
@@ -33,7 +35,7 @@ def load_config(config_path: str):
             raw = yaml.safe_load(stream)
         return raw
     except yaml.YAMLError as e:
-        print(f"Error loading config: {e}")
+        logger.error("Error loading config: %s", e)
         return None
 
 
@@ -91,7 +93,7 @@ def match_file(file_content: ContentFile.ContentFile, file_match: str, _) -> boo
     try:
         return fnmatch.fnmatch(file_content.name, file_match)
     except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.error("Failed to process file %s: %s", file_content.path, e)
+        logger.error("Failed matching file name and file_match for file %s: %s", file_content.path, e)
         return False
 
 
@@ -103,7 +105,7 @@ def match_content(file_content: ContentFile.ContentFile, file_match: str, conten
 
     Args:
         file_content  (obj): A ContentFile object containing the file content.
-        file_match    (str):   A file name pattern to match the name against.
+        file_match    (str): A file name pattern to match the name against.
         content_match (list): A list of strings to match against the decoded content.
 
     Returns:
@@ -122,6 +124,9 @@ def match_content(file_content: ContentFile.ContentFile, file_match: str, conten
     except (UnicodeDecodeError, AttributeError):
         # Handle cases where decoding fails or encoding is not available
         logger.warning("Failed to decode content for file: %s", file_content.name)
+        return False
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.error("Failed matching file content, file_match, content_match for file %s: %s", file_content.path, e)
         return False
 
 
@@ -202,6 +207,8 @@ def process_and_analyze_file(parser: str,
         'shell': shell_parser.parse_shell_file,
         'terraform': terraform_parser.parse_terraform_file,
         'javascript': js_parser.parse_js_file,
+        'java': java_parser.parse_java_file,
+        'ruby': ruby_parser.parse_ruby_file,
     }
 
     parse_function = parsers.get(parser)
