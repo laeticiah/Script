@@ -77,39 +77,46 @@ assets:
       - 'aws-sdk'
       - 'import aws'
     parse_function: javascript
-  # - type: Cloudformation (CFN)
-  #   file_match: '*.json'
-  #   matchType: content
-  #   content_match:
-  #     - 'AWSTemplateFormatVersion:'
-  #   parse_function: cloudformation
+  - type: Cloudformation (CFN)
+    file_match: '*.json'
+    matchType: content
+    content_match:
+      - 'AWSTemplateFormatVersion'
+    parse_function: cloudformation
   # - type: Chef
   #   file_match: '*.rb'
   #   matchType: content
   #   content_match:
   #     - 'AwsCookbook'
+  #   parse_function: chef
   # - type: C++
   #   file_match: '*.cpp'
   #   matchType: content
   #   content_match:
   #     - 'include <aws/core/Aws.h>'
-  # - type: Ruby
-  #   file_match: '*.rb'
-  #   matchType: content
-  #   content_match:
-  #     - 'aws-sdk-'
-  # - type: Java
-  #   file_match: '*.java'
-  #   matchType: content
-  #   content_match:
-  #     - public class
-  #     - 'import com.amazonaws.'
+  - type: Ruby
+    file_match: '*.rb'
+    matchType: content
+    content_match:
+      - 'aws-sdk-'
+    parse_function: ruby
+  - type: Java
+    file_match: '*.java'
+    matchType: content
+    content_match:
+      - public class
+      - 'import com.amazonaws.'
+    parse_function: java
   # - type: Jenkins
   #   file_match: '*.groovy'
   #   matchType: file
   # - type: Spring Cloud
   #   file_match: '*.java'
-  #   matchType: file
+  #   matchType: content
+  #   content_match:
+  #     - package io.awspring.cloud
+  #     - 'import org.springframework.cloud'
+  #   parse_function: springcloud
   # - type: Dockerfile
   #   file_match: 'Dockerfile'
   #   matchType: content
