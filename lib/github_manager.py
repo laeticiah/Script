@@ -86,32 +86,32 @@ def get_repo_metadata(a_repo: Repository.Repository) -> dict[str, Any]:
         dict[str, Any]: A dictionary containing retrieved repository metadata
     """
 
-    def get_repo_metadata(a_repo: Repository.Repository) -> dict[str, Any]:
-        # ...
-        try:
-            _gh_languages: dict[str, int] = a_repo.get_languages()
-            _languages: str = ' '.join(str(x) for x in _gh_languages.keys())
-        except (GithubException, AttributeError):
-            _gh_languages = {}
-            _languages = ''
+def get_repo_metadata(a_repo: Repository.Repository) -> dict[str, Any]:
+    # ...
+    _gh_languages: dict[str, int] = {}
+    _languages: str = ''
+    try:
+        _gh_languages = a_repo.get_languages()
+        _languages = ' '.join(str(x) for x in _gh_languages.keys())
+    except (GithubException, AttributeError):
+        logger.warning("Failed to retrieve languages for repository: %s", a_repo.full_name)
 
-        try:
-            _labels: list[str] = [label.name for label in a_repo.get_labels()]
-        except (GithubException, AttributeError):
-            _labels = []
+    _labels: list[str] = []
+    try:
+        _labels = [label.name for label in a_repo.get_labels()]
+    except (GithubException, AttributeError):
+        logger.warning("Failed to retrieve labels for repository: %s", a_repo.full_name)
 
-        try:
-            branch_meta: Branch.Branch = a_repo.get_branch(branch=a_repo.default_branch)
-            _protection: dict[str, Any] = branch_meta.raw_data.get("protection", {}) if 'protection' in branch_meta.raw_data else {}
-            _project_status: Optional[str] = _protection.get("enabled", None)
-            _protection_enforcement_level: bool = _protection.get("required_status_checks", {}).get("enforcement_level", None)
-        except (GithubException, AttributeError):
-            _protection = {}
-            _project_status = None
-            _protection_enforcement_level = None
-
-        # ...
-        return min_metadata
+    _protection: dict[str, Any] = {}
+    _project_status: Optional[str] = None
+    _protection_enforcement_level: bool = None
+    try:
+        branch_meta: Branch.Branch = a_repo.get_branch(branch=a_repo.default_branch)
+        _protection = branch_meta.raw_data.get("protection", {}) if 'protection' in branch_meta.raw_data else {}
+        _project_status = _protection.get("enabled", None)
+        _protection_enforcement_level = _protection.get("required_status_checks", {}).get("enforcement_level", None)
+    except (GithubException, AttributeError):
+        logger.warning("Failed to retrieve branch protection details for repository: %s", a_repo.full_name)   
 
     # creating a more complete capture of the available repo's metadata
     # since some of it will probably be used later
@@ -254,10 +254,10 @@ def process_repos(repos: List[Repository.Repository], config: Dict[str, Any], ou
     match_functions = prepare_match_functions(config)
     # Use a context manager for Pool
     with Pool() as pool:
-        #pool.starmap(analyze_repo, [(repo, match_functions, output_file) for repo in repos])
+        pool.starmap(analyze_repo, [(repo, match_functions, output_file) for repo in repos])
 
         ## Uncomment the line below to test with a single repo (e.g. 'test-78') and comment the line above
 
-        pool.starmap(analyze_repo, [(repo, match_functions, output_file) for repo in repos if repo.name == 'aws-chef'])
+       # pool.starmap(analyze_repo, [(repo, match_functions, output_file) for repo in repos if repo.name == 'aws-chef'])
 
     logger.info("Completed process_repos")
