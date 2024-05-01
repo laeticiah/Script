@@ -19,7 +19,7 @@ def parse_ruby_file(content):
 
         return formatted_calls
     except Exception as e:
-        print(f"Error reading or processing: {str(e)}")
+        logging.error('Error reading or processing %s', str(e))
         return set()
 
 def main():
