@@ -83,17 +83,6 @@ assets:
     content_match:
       - 'AWSTemplateFormatVersion'
     parse_function: cloudformation
-  # - type: Chef
-  #   file_match: '*.rb'
-  #   matchType: content
-  #   content_match:
-  #     - 'AwsCookbook'
-  #   parse_function: chef
-  # - type: C++
-  #   file_match: '*.cpp'
-  #   matchType: content
-  #   content_match:
-  #     - 'include <aws/core/Aws.h>'
   - type: Ruby
     file_match: '*.rb'
     matchType: content
@@ -107,6 +96,16 @@ assets:
       - public class
       - 'import com.amazonaws.'
     parse_function: java
+  # - type: Chef
+  #   file_match: '*.rb'
+  #   matchType: content
+  #   content_match:
+  #     - 'AwsCookbook'
+  # - type: C++
+  #   file_match: '*.cpp'
+  #   matchType: content
+  #   content_match:
+  #     - 'include <aws/core/Aws.h>'
   # - type: Jenkins
   #   file_match: '*.groovy'
   #   matchType: file
@@ -131,9 +130,6 @@ assets:
   #   matchType: file
   # - type: Makefile
   #   file_match: 'Makefile'
-  #   matchType: file
-  # - type: HCL
-  #   file_match: '*.hcl'
   #   matchType: file
 #######
 # - type: HTML
@@ -162,7 +158,6 @@ assets:
 #   content_match:
 #     - SELECT
 #     - CREATE TABLE
-
 # - type: Apex
 #   file_match: '*.cls'
 #   matchType: file
