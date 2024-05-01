@@ -1,3 +1,6 @@
+'''
+Powershell parser
+'''
 import boto3
 import re
 
