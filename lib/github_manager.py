@@ -86,15 +86,32 @@ def get_repo_metadata(a_repo: Repository.Repository) -> dict[str, Any]:
         dict[str, Any]: A dictionary containing retrieved repository metadata
     """
 
-    _gh_languages: dict[str, int] = a_repo.get_languages()
-    _languages: str = ' '.join(str(x) for x in _gh_languages.keys())
-    _labels: list[str] = [label.name for label in a_repo.get_labels()]
-    branch_meta: Branch.Branch = a_repo.get_branch(branch=a_repo.default_branch)
+    def get_repo_metadata(a_repo: Repository.Repository) -> dict[str, Any]:
+        # ...
+        try:
+            _gh_languages: dict[str, int] = a_repo.get_languages()
+            _languages: str = ' '.join(str(x) for x in _gh_languages.keys())
+        except (GithubException, AttributeError):
+            _gh_languages = {}
+            _languages = ''
 
-    _protection: dict[str, Any] = branch_meta.raw_data.get(
-        "protection", {}) if 'protection' in branch_meta.raw_data else {}
-    _project_status: Optional[str] = _protection.get("enabled", None)
-    _protection_enforcement_level: bool = _protection.get("required_status_checks", {}).get("enforcement_level", None)
+        try:
+            _labels: list[str] = [label.name for label in a_repo.get_labels()]
+        except (GithubException, AttributeError):
+            _labels = []
+
+        try:
+            branch_meta: Branch.Branch = a_repo.get_branch(branch=a_repo.default_branch)
+            _protection: dict[str, Any] = branch_meta.raw_data.get("protection", {}) if 'protection' in branch_meta.raw_data else {}
+            _project_status: Optional[str] = _protection.get("enabled", None)
+            _protection_enforcement_level: bool = _protection.get("required_status_checks", {}).get("enforcement_level", None)
+        except (GithubException, AttributeError):
+            _protection = {}
+            _project_status = None
+            _protection_enforcement_level = None
+
+        # ...
+        return min_metadata
 
     # creating a more complete capture of the available repo's metadata
     # since some of it will probably be used later
@@ -144,7 +161,7 @@ def retrieve_repos(github_client: Github, user_or_org: str, repository: Optional
             if repository:
                 repos.append(github_client.get_user(user_or_org).get_repo(repository))
             else:
-                for repo in github_client.get_user().get_repos():
+                for repo in github_client.get_user(user_or_org).get_repos():
                     repos.append(repo)  # Append individual repositories
     except GithubException as e:
         logger.error("Error retrieving repos for %s: %s", user_or_org, e)
@@ -179,9 +196,14 @@ def analyze_repo(repo: Repository.Repository, match_functions: list[dict, Any], 
         logger.error("Error getting GitHub metadata. Repository '%s'. Error: %s", repo.full_name, e)
         branch_metadata = {}
 
-    # Open CSV file (modify based on your CSV handling logic)
-    with open(output_file, 'a', newline='', encoding='utf-8') as csvfile:
-        writer = csv.writer(csvfile)
+    # Check if the repository is empty
+    if repo.get_contents("/"):
+        # Open CSV file (modify based on your CSV handling logic)
+        with open(output_file, 'a', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            # ...
+    else:
+        logger.warning("Repository '%s' is empty. Skipping analysis.", repo.full_name)
 
         # Loop over fetched files and configurations
         for file_content in extract_files_from_repo(repo)[0:]:
@@ -232,10 +254,10 @@ def process_repos(repos: List[Repository.Repository], config: Dict[str, Any], ou
     match_functions = prepare_match_functions(config)
     # Use a context manager for Pool
     with Pool() as pool:
-        pool.starmap(analyze_repo, [(repo, match_functions, output_file) for repo in repos])
+        #pool.starmap(analyze_repo, [(repo, match_functions, output_file) for repo in repos])
 
         ## Uncomment the line below to test with a single repo (e.g. 'test-78') and comment the line above
 
-        #pool.starmap(analyze_repo, [(repo, match_functions, output_file) for repo in repos if repo.name == 'aws-chef'])
+        pool.starmap(analyze_repo, [(repo, match_functions, output_file) for repo in repos if repo.name == 'aws-chef'])
 
     logger.info("Completed process_repos")
