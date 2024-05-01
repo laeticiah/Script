@@ -144,7 +144,7 @@ def retrieve_repos(github_client: Github, user_or_org: str, repository: Optional
             if repository:
                 repos.append(github_client.get_user(user_or_org).get_repo(repository))
             else:
-                for repo in github_client.get_user(user_or_org).get_repos():
+                for repo in github_client.get_user().get_repos():
                     repos.append(repo)  # Append individual repositories
     except GithubException as e:
         logger.error("Error retrieving repos for %s: %s", user_or_org, e)
@@ -232,10 +232,10 @@ def process_repos(repos: List[Repository.Repository], config: Dict[str, Any], ou
     match_functions = prepare_match_functions(config)
     # Use a context manager for Pool
     with Pool() as pool:
-        #pool.starmap(analyze_repo, [(repo, match_functions, output_file) for repo in repos])
+        pool.starmap(analyze_repo, [(repo, match_functions, output_file) for repo in repos])
 
         ## Uncomment the line below to test with a single repo (e.g. 'test-78') and comment the line above
 
-        pool.starmap(analyze_repo, [(repo, match_functions, output_file) for repo in repos if repo.name == 'aws-chef'])
+        #pool.starmap(analyze_repo, [(repo, match_functions, output_file) for repo in repos if repo.name == 'aws-chef'])
 
     logger.info("Completed process_repos")
