@@ -37,7 +37,7 @@ def parse_java_file(file_content: str) -> dict:
                 function_matches = function_regex.findall(file_content)
                 result[aws_service] = []
                 for func_match in function_matches:
-                    if func_match.startswith(('run', 'create', 'delete', 'put', 'modify', 'register', 'update')):
+                    if func_match.startswith(('run', 'create', 'delete', 'put', 'modify', 'register', 'update', 'describe', 'list', 'get', 'start', 'stop', 'terminate', 'enable', 'disable', 'invoke', 'send', 'publish', 'import', 'export', 'grant', 'revoke')):
                         result[aws_service].append(func_match)
     except Exception as e:
         logger.exception("Error parsing Java file: %s", str(e))
