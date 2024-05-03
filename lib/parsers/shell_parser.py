@@ -13,6 +13,7 @@ def parse_shell_file(file_content: str):
         r'\baws\s+(\b(ec2|ecs|eks|lambda|s3|rds|dynamodb|cloudformation|iam)\b)\s+(\b(start|stop|terminate|delete|remove)\b)(-\w+)*',
         r'\baws\s+(\b(ec2|ecs|eks|lambda|s3|rds|dynamodb|cloudformation|iam)\b)\s+(\b(update|modify|attach|detach)\b)(-\w+)*',
         r'\baws\s+(\b(ec2|ecs|eks|lambda|s3|rds|dynamodb|cloudformation|iam)\b)\s+(\b(create|put|run|make|build|launch)\b)(-\w+)*'
+        r'\baws\s+ec2-instance-connect\s+send-ssh-public-key\s+.+'
     ]
 
     for pattern in PATTERNS:
