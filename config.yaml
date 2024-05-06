@@ -111,7 +111,7 @@ assets:
       - 'import botocore'
       - 'import awscli'
     parse_function: jupyter
-  - type: C#
+  - type: CSharp
     file_match: '*.cs'
     matchType: file
     content_match:
