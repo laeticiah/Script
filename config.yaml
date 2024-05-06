@@ -96,6 +96,35 @@ assets:
       - public class
       - 'import com.amazonaws.'
     parse_function: java
+  - type: Chef
+    file_match: '*.rb'
+    matchType: content
+    content_match:
+      - 'aws_'
+      - 'AwsCookbook'
+    parse_function: chef
+  - type: Jupyter Notebook
+    file_match: '*.ipynb'
+    matchType: content
+    content_match:
+      - 'import boto3'
+      - 'import botocore'
+      - 'import awscli'
+    parse_function: jupyter
+  - type: C#
+    file_match: '*.cs'
+    matchType: file
+    content_match:
+      - 'using Amazon.'
+      - 'using AWS.'
+    parse_function: csharp
+  - type: .NET
+    file_match: '*.cs'
+    matchType: file
+    content_match:
+      - 'using Amazon.'
+      - 'using AWS.'
+    parse_function: csharp
   # - type: Chef
   #   file_match: '*.rb'
   #   matchType: content
