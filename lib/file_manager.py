@@ -21,6 +21,7 @@ from lib.parsers import (
     ruby_parser,
     chef_parser,
     csharp_parser,
+    jupyter_parser
 )
 
 # pylint: disable=line-too-long
@@ -213,6 +214,7 @@ def process_and_analyze_file(parser: str,
         'ruby': ruby_parser.parse_ruby_file,
         'chef': chef_parser.parse_chef_file,
         'csharp': csharp_parser.parse_csharp_file,
+        'jupyter': jupyter_parser.parse_jupyter_file,
     }
 
     parse_function = parsers.get(parser)
