@@ -19,6 +19,8 @@ from lib.parsers import (
     js_parser,
     java_parser,
     ruby_parser,
+    chef_parser,
+    csharp_parser,
 )
 
 # pylint: disable=line-too-long
@@ -209,6 +211,8 @@ def process_and_analyze_file(parser: str,
         'javascript': js_parser.parse_js_file,
         'java': java_parser.parse_java_file,
         'ruby': ruby_parser.parse_ruby_file,
+        'chef': chef_parser.parse_chef_file,
+        'csharp': csharp_parser.parse_csharp_file,
     }
 
     parse_function = parsers.get(parser)
