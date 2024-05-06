@@ -145,33 +145,85 @@ def get_repo_metadata(a_repo: Repository.Repository) -> dict[str, Any]:
 
    return min_metadata
 
+def retrieve_repos(github_client: Github, user_or_org: Optional[str] = None, repository: Optional[str] = None) -> List[Repository.Repository]:
+    """
+    Retrieves repositories from organizations within the GitHub Enterprise Managed User (EMU).
 
-def retrieve_repos(github_client: Github, user_or_org: str, repository: Optional[str]) -> List[Repository.Repository]:
-   """Retrieves repositories based on user/org (paginated)."""
-   repos = []
-   try:
-       if "/" in user_or_org:  # Handle organization format (username/org)
-           org = user_or_org.split("/")
-           if repository:
-               repos.append(github_client.get_organization(org).get_repo(repository))
-           else:
-               for repo in github_client.get_organization(org).get_repos():
-                   repos.append(repo)  # Append individual repositories
-       else:
-           if repository:
-               repos.append(github_client.get_user(user_or_org).get_repo(repository))
-           else:
-               for repo in github_client.get_user().get_repos():
-                   repos.append(repo)  # Append individual repositories
-   except GithubException as e:
-       logger.error("Error retrieving repos for %s: %s", user_or_org, e)
+    Args:
+        github_client (Github): An authenticated Github client instance.
+        user_or_org (Optional[str]): The username or organization name. If not provided, it will retrieve repositories from all organizations.
+        repository (Optional[str]): The name of a specific repository to retrieve. If not provided, it will retrieve all repositories.
 
-   if repos:
-       logger.info("Found %s repositories:", len(repos))
-       for repo in repos:
-           logger.info("\t- %s", repo.full_name)
+    Returns:
+        List[Repository.Repository]: A list of Repository objects representing the retrieved repositories.
+    """
+    repos = []
 
-   return repos
+    try:
+        if user_or_org:
+            if "/" in user_or_org:  # Handle organization format (username/org)
+                org_name = user_or_org.split("/")[1]
+                org = github_client.get_organization(org_name)
+                repos.extend(get_org_repos(org, repository))
+            else:
+                org = github_client.get_organization(user_or_org)
+                repos.extend(get_org_repos(org, repository))
+        else:
+            for org in github_client.get_organizations():
+                repos.extend(get_org_repos(org, repository))
+
+    except GithubException as e:
+        logger.error("Error retrieving repos: %s", e)
+
+    if repos:
+        logger.info("Found %s repositories:", len(repos))
+        for repo in repos:
+            logger.info("\t- %s", repo.full_name)
+
+    return repos
+
+def get_org_repos(org: Organization.Organization, repository: Optional[str] = None) -> List[Repository.Repository]:
+    """
+    Retrieves repositories from a specific organization.
+
+    Args:
+        org (Organization.Organization): The organization object.
+        repository (Optional[str]): The name of a specific repository to retrieve. If not provided, it will retrieve all repositories.
+
+    Returns:
+        List[Repository.Repository]: A list of Repository objects representing the retrieved repositories.
+    """
+    if repository:
+        return [org.get_repo(repository)]
+    else:
+        return list(org.get_repos(type='all'))
+
+# def retrieve_repos(github_client: Github, user_or_org: str, repository: Optional[str]) -> List[Repository.Repository]:
+#    """Retrieves repositories based on user/org (paginated)."""
+#    repos = []
+#    try:
+#        if "/" in user_or_org:  # Handle organization format (username/org)
+#            org = user_or_org.split("/")
+#            if repository:
+#                repos.append(github_client.get_organization(org).get_repo(repository))
+#            else:
+#                for repo in github_client.get_organization(org).get_repos():
+#                    repos.append(repo)  # Append individual repositories
+#        else:
+#            if repository:
+#                repos.append(github_client.get_user(user_or_org).get_repo(repository))
+#            else:
+#                for repo in github_client.get_user().get_repos():
+#                    repos.append(repo)  # Append individual repositories
+#    except GithubException as e:
+#        logger.error("Error retrieving repos for %s: %s", user_or_org, e)
+
+#    if repos:
+#        logger.info("Found %s repositories:", len(repos))
+#        for repo in repos:
+#            logger.info("\t- %s", repo.full_name)
+
+#    return repos
 
 
 def analyze_repo(repo: Repository.Repository, match_functions: list[dict, Any], output_file):
