@@ -8,7 +8,7 @@ from multiprocessing import Pool
 from typing import Any, Dict, List, Optional, Union
 
 from github import (Branch, ContentFile, Github,
-                   GithubException, Repository)
+                   GithubException, Repository, Organization)
 
 from lib.file_manager import (format_row_data,
                              prepare_match_functions,
