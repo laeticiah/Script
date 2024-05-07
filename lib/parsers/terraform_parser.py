@@ -52,19 +52,36 @@ def parse_terraform_file(file_content):
 
         # Traverse the parsed content for module declarations
         if 'module' in parsed_content:
-            for module_name, module_config in parsed_content['module'].items():
-                if 'source' in module_config:
-                    module_source = module_config['source']
-                    # Recursively parse the module source if it's a local file path
-                    if module_source.startswith('./') or module_source.startswith('../'):
-                        try:
-                            with open(module_source, 'r') as module_file:
-                                module_content = module_file.read()
-                                module_resources, module_data_sources = parse_terraform_file(module_content)
-                                resource_counts.update(module_resources)
-                                data_source_counts.update(module_data_sources)
-                        except FileNotFoundError:
-                            print(f"Module file not found: {module_source}")
+            modules = parsed_content['module']
+            if isinstance(modules, list):
+                for module in modules:
+                    for module_name, module_config in module.items():
+                        if 'source' in module_config:
+                            module_source = module_config['source']
+                            # Recursively parse the module source if it's a local file path
+                            if module_source.startswith('./') or module_source.startswith('../'):
+                                try:
+                                    with open(module_source, 'r') as module_file:
+                                        module_content = module_file.read()
+                                        module_resources, module_data_sources = parse_terraform_file(module_content)
+                                        resource_counts.update(module_resources)
+                                        data_source_counts.update(module_data_sources)
+                                except FileNotFoundError:
+                                    print(f"Module file not found: {module_source}")
+            else:
+                for module_name, module_config in modules.items():
+                    if 'source' in module_config:
+                        module_source = module_config['source']
+                        # Recursively parse the module source if it's a local file path
+                        if module_source.startswith('./') or module_source.startswith('../'):
+                            try:
+                                with open(module_source, 'r') as module_file:
+                                    module_content = module_file.read()
+                                    module_resources, module_data_sources = parse_terraform_file(module_content)
+                                    resource_counts.update(module_resources)
+                                    data_source_counts.update(module_data_sources)
+                            except FileNotFoundError:
+                                print(f"Module file not found: {module_source}")
 
     # Convert the defaultdicts to regular dicts for return
     resource_counts = dict(resource_counts)
@@ -83,7 +100,6 @@ def parse_terraform_file(file_content):
     output['HCL Version'] = f"HCLv{version}" if version else "Unknown"
 
     return output
-
 if __name__ == '__main__':
     script_path = r'resources/ec2.tf'
     with open(script_path, 'r') as file:  # pylint: disable=unspecified-encoding
