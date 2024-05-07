@@ -1,3 +1,7 @@
+'''
+chef parser
+'''
+
 import re
 import os
 from lib.logger import setup_logger
