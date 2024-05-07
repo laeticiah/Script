@@ -1,3 +1,7 @@
+'''
+Jupyter Notebook parser
+'''
+
 import nbformat
 from nbconvert import PythonExporter
 from nbconvert.preprocessors import Preprocessor
