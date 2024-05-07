@@ -17,13 +17,16 @@ def parse_chef_file(file_content):
     resources_used = {}
 
     # Find all matches and filter non-AWS calls
-    for _match in re.finditer(pattern, file_content):
-        key = f"{_match.group(1)}.{_match.group(2)}"
-        if key not in non_aws_methods:
-            if key not in resources_used:
-                resources_used[key] = 0
-            resources_used[key] += 1
-
+    try:
+        for _match in re.finditer(pattern, file_content):
+            key = f"{_match.group(1)}.{_match.group(2)}"
+            if key not in non_aws_methods:
+                if key not in resources_used:
+                    resources_used[key] = 0
+                resources_used[key] += 1
+    except Exception as e:
+        logger.exception("Error parsing chef file: %s", str(e))
+        return {}
     return resources_used
 
 # Re-analyzing with the revised approach to include S3
