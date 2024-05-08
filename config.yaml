@@ -175,3 +175,7 @@ assets:
     file_match: '*.vbproj'
     matchType: file
     parse_function: dotnet
+  - type: dot net
+    file_match: '*.*proj'
+    matchType: file
+    parse_function: dotnet
