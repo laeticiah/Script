@@ -158,28 +158,12 @@ assets:
       - '*.ascx'
       - '*.asmx'
     matchType: file
-    content_match:
-      - '<%@ Page'
-      - '<%@ Control'
-      - '<%@ WebService'
-      - 'Amazon.'
-      - 'AWS.'
     parse_function: dotnet
   - type: CSharpProject
     file_match: '*.csproj'
     matchType: file
-    content_match:
-      - '<Project Sdk="Microsoft.NET.Sdk.Web">'
-      - '<TargetFramework>'
-      - 'Amazon.'
-      - 'AWS.'
     parse_function: dotnet
   - type: VBNetProject
     file_match: '*.vbproj'
     matchType: file
-    content_match:
-      - '<Project Sdk="Microsoft.NET.Sdk.Web">'
-      - '<TargetFramework>'
-      - 'Amazon.'
-      - 'AWS.'
     parse_function: dotnet
