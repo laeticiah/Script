@@ -134,6 +134,10 @@ assets:
     file_match: 'jenkinsfile'
     matchType: file
     parse_function: groovy
+  - type: Jenkins
+    file_match: 'Jenkinsfile'
+    matchType: file
+    parse_function: groovy
   - type: CSharp
     file_match: '*.cs'
     matchType: file
