@@ -22,7 +22,10 @@ from lib.parsers import (
     chef_parser,
     csharp_parser,
     springcloud_parser,
-   # groovy_parser
+    groovy_parser,
+    dotnet_parser,
+    java_property_parser,
+    manifest_parser
 )
 
 # pylint: disable=line-too-long
@@ -216,7 +219,10 @@ def process_and_analyze_file(parser: str,
         'chef': chef_parser.parse_chef_file,
         'csharp': csharp_parser.parse_csharp_file,
         'springcloud': springcloud_parser.parse_springcloud_file,
-        #'groovy': groovy_parser.parse_groovy_file,
+        'groovy': groovy_parser.parse_groovy_file,
+        'dotnet': dotnet_parser.parse_dotnet_file,
+        'manifest': manifest_parser.parse_manifest_file,
+        'java_property': java_property.parse_java_property_file
     }
 
     parse_function = parsers.get(parser)
