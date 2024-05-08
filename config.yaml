@@ -118,13 +118,13 @@ assets:
       - package io.awspring.cloud
       - 'import org.springframework.cloud'
     parse_function: springcloud
-  - "type": "Manifest File"
-    "file_match": "**/manifest.yml"
-    "matchType": "file"
+  - type: Manifest File
+    file_match: '**/manifest.yml'
+    matchType: file
     parse_function: manifest
-  - "type": "Java Properties"
-    "file_match": "**/*.properties"
-    "matchType": "file"
+  - type": Java Properties
+    file_match: '**/*.properties'
+    matchType: file
     parse_function: java_property
   - type: Jenkins
     file_match: '*.groovy'
