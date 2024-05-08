@@ -1,4 +1,4 @@
-def parse_java_property_file(content):
+def parse_javaproperty_file(content):
     keys = []
     for line in content.split('\n'):
         line = line.strip()

@@ -125,7 +125,7 @@ assets:
   - type": Java Properties
     file_match: '**/*.properties'
     matchType: file
-    parse_function: java_property
+    parse_function: javaproperty
   - type: Jenkins
     file_match: '*.groovy'
     matchType: file
