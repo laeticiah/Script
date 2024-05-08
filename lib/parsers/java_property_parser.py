@@ -1,4 +1,4 @@
-def parser_java_property_file(content):
+def parse_java_property_file(content):
     keys = []
     for line in content.split('\n'):
         line = line.strip()
@@ -15,4 +15,4 @@ if __name__ == '__main__':
     filename = 'resources\\pipeline.properties'
     with open(filename, 'r') as file:
         content = file.read()
-    print(parser_java_property_file(content))
+    print(parse_java_property_file(content))
