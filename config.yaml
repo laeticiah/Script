@@ -111,20 +111,6 @@ assets:
       - 'import botocore'
       - 'import awscli'
     parse_function: jupyter
-  - type: CSharp
-    file_match: '*.cs'
-    matchType: file
-    content_match:
-      - 'using Amazon.'
-      - 'using AWS.'
-    parse_function: csharp
-  - type: .NET
-    file_match: '*.cs'
-    matchType: file
-    content_match:
-      - 'using Amazon.'
-      - 'using AWS.'
-    parse_function: csharp
   - type: SpringCloud
     file_match: '*.java'
     matchType: content
@@ -132,153 +118,68 @@ assets:
       - package io.awspring.cloud
       - 'import org.springframework.cloud'
     parse_function: springcloud
-  # - type: Chef
-  #   file_match: '*.rb'
-  #   matchType: content
-  #   content_match:
-  #     - 'AwsCookbook'
-  # - type: C++
-  #   file_match: '*.cpp'
-  #   matchType: content
-  #   content_match:
-  #     - 'include <aws/core/Aws.h>'
-  # - type: Jenkins
-  #   file_match: '*.groovy'
-  #   matchType: file
-  # - type: Spring Cloud
-  #   file_match: '*.java'
-  #   matchType: content
-  #   content_match:
-  #     - package io.awspring.cloud
-  #     - 'import org.springframework.cloud'
-  #   parse_function: springcloud
-  # - type: Dockerfile
-  #   file_match: 'Dockerfile'
-  #   matchType: content
-  #   content_match:
-  #     - FROM
-  #     - RUN
-  # - type: C#
-  #   file_match: '*.cs'
-  #   matchType: file
-  # - type: C
-  #   file_match: '*.c'
-  #   matchType: file
-  # - type: Makefile
-  #   file_match: 'Makefile'
-  #   matchType: file
-#######
-# - type: HTML
-#   file_match: '*.html'
-#   matchType: file
-# - type: CI Configuration
-#   file_match: .github/workflows/*.yml
-#   matchType: content
-#   content_match:
-#     - actions/checkout
-# - type: CSS
-#   file_match: '*.css'
-#   matchType: content
-#   content_match:
-#     - font-family:
-#     - color:
-# - type: XML/XSLT
-#   file_match: '*.xml'
-#   matchType: content
-#   content_match:
-#     - <?xml version=
-#     - <xsl:stylesheet
-# - type: SQL (T-SQL, PLSQL, HiveQL, PLpgSQL)
-#   file_match: '*.sql'
-#   matchType: content
-#   content_match:
-#     - SELECT
-#     - CREATE TABLE
-# - type: Apex
-#   file_match: '*.cls'
-#   matchType: file
-# - type: Visual Basic .NET
-#   file_match: '*.vb' # need to check the file content
-#   matchType: file
-# - type: VBA
-#   file_match: '*.vba'
-#   matchType: file
-# - type: XSLT
-#   file_match: '*.xslt'
-#   matchType: file
-
-# - type: ASP.NET
-#   file_match: '*.aspx'
-#   matchType: file
-# - type: Batchfile
-#   file_match: '*.bat'
-#   matchType: file
-# - type: COBOL
-#   file_match: '*.cob'
-#   matchType: file
-# - type: Perl
-#   file_match: '*.pl'
-#   matchType: file
-# - type: PLSQL
-#   file_match: '*.sql'
-#   matchType: file
-# - type: R
-#   file_match: '*.r'
-#   matchType: file
-# - type: Roff
-#   file_match: '*.roff'
-#   matchType: file
-# - type: Scala
-#   file_match: '*.scala'
-#   matchType: file
-# - type: Classic ASP
-#   file_match: '*.asp'
-#   matchType: file
-# - type: Gherkin
-#   file_match: '*.feature'
-#   matchType: file
-# - type: Objective-C
-#   file_match: '*.m'
-#   matchType: file
-# - type: Rebol
-#   file_match: '*.reb'
-#   matchType: file
-# - type: SCSS
-#   file_match: '*.scss'
-#   matchType: file
-# - type: Swift
-#   file_match: '*.swift'
-#   matchType: file
-# - type: Visual Basic
-#   file_match: '*.vb'
-#   matchType: file
-# - type: Rich Text Format
-#   file_match: '*.rtf'
-#   matchType: file
-# - type: HiveQL
-#   file_match: '*.q'
-#   matchType: file
-# - type: Smatty
-#   file_match: '*.sm'
-#   matchType: file
-# - type: IDL
-#   file_match: '*.idl'
-#   matchType: file
-# - type: Raku
-#   file_match: '*.raku'
-#   matchType: file
-# - type: TeX
-#   file_match: '*.tex'
-#   matchType: file
-# - type: Tcl
-#   file_match: '*.tcl'
-#   matchType: file
-# - type: PLpgSQL
-#   file_match: '*.sql'
-#   matchType: file
-# - type: Matlab
-#   file_match: '*.mat'
-#   matchType: file
-# - type: Jupyter Notebook
-#   file_match: '*.ipynb'
-#   matchType: file
+  - "type": "Manifest File"
+    "file_match": "**/manifest.yml"
+    "matchType": "file"
+    parse_function: manifest
+  - "type": "Java Properties"
+    "file_match": "**/*.properties"
+    "matchType": "file"
+    parse_function: java_property
+  - type: Jenkins
+    file_match: '*.groovy'
+    matchType: file
+    parse_function: groovy 
+  - type: Jenkins
+    file_match: 'jenkinsfile'
+    matchType: file
+    parse_function: groovy
+  - type: CSharp
+    file_match: '*.cs'
+    matchType: file
+    content_match:
+      - 'using System;'
+      - 'using Amazon.'
+      - 'using AWS.'
+      - 'public class'
+    parse_function: csharp
+  - type: VBNet
+    file_match: '*.vb'
+    matchType: file
+    content_match:
+      - 'Imports System'
+      - 'Imports Amazon.'
+      - 'Imports AWS.'
+      - 'Public Class'
+    parse_function: dotnet
+  - type: ASPNet
+    file_match:
+      - '*.aspx'
+      - '*.ascx'
+      - '*.asmx'
+    matchType: file
+    content_match:
+      - '<%@ Page'
+      - '<%@ Control'
+      - '<%@ WebService'
+      - 'Amazon.'
+      - 'AWS.'
+    parse_function: dotnet
+  - type: CSharpProject
+    file_match: '*.csproj'
+    matchType: file
+    content_match:
+      - '<Project Sdk="Microsoft.NET.Sdk.Web">'
+      - '<TargetFramework>'
+      - 'Amazon.'
+      - 'AWS.'
+    parse_function: dotnet
+  - type: VBNetProject
+    file_match: '*.vbproj'
+    matchType: file
+    content_match:
+      - '<Project Sdk="Microsoft.NET.Sdk.Web">'
+      - '<TargetFramework>'
+      - 'Amazon.'
+      - 'AWS.'
+    parse_function: dotnet
