@@ -4,3 +4,6 @@ python-dotenv
 python-hcl2
 cfn-flip
 pyyaml
+pytest
+nbformat
+nbconvert

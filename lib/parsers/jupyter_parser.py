@@ -6,7 +6,7 @@ import nbformat
 from nbconvert import PythonExporter
 from nbconvert.preprocessors import Preprocessor
 
-from boto3_parser import parse_boto3_file
+from lib.parsers.boto3_parser import parse_boto3_file
 
 
 class HandleMagicCommands(Preprocessor):

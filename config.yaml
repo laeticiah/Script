@@ -157,12 +157,16 @@ assets:
       - 'Public Class'
     parse_function: dotnet
   - type: ASPNet
-    file_match:
-      - '*.aspx'
-      - '*.ascx'
-      - '*.asmx'
+    file_match: '*.aspx'
     matchType: file
     parse_function: dotnet
+  # - type: ASPNet
+  #   file_match:
+  #     - '*.aspx'
+  #     - '*.ascx'
+  #     - '*.asmx'
+  #   matchType: file
+  #   parse_function: dotnet
   - type: CSharpProject
     file_match: '*.csproj'
     matchType: file
