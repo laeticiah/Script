@@ -5,5 +5,6 @@ python-hcl2
 cfn-flip
 pyyaml
 pytest
+boto3
 nbformat
 nbconvert
