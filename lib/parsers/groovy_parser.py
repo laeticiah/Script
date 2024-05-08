@@ -10,13 +10,14 @@ logger = setup_logger(__name__)
 
 # Regular expression patterns
 AWS_PATTERN = r'(?:aws|AWS|Amazon|com\.amazonaws)\S*'
-AWS_CLI_PATTERN = r'(?:aws|AWS)\s+\S+(?:\s+--\S+)*'
+AWS_CLI_PATTERN = r'aws\s+(\w+\s+[\w-]+)'
 AWS_METHOD_PATTERN = r'(?:\w+\.)?(?:create|delete|get|put|update|describe|list|batch)(?:Bucket|Instance|Volume|SecurityGroup|Subnet|VPC|Queue|Topic|Function|Rule|Policy|Certificate|HostedZone|Stack|Table|User|Group|Role|Policy|Trail|Alarm|Dashboard|Repository|Pipeline|Project|Build|Deployment|Cluster|Service|TaskDefinition|ContainerInstance|Target|LoadBalancer|LaunchConfiguration|ScalingPolicy|ScalingGroup|DBInstance|DBCluster|Cache|Stream|Domain|Application|Environment|Layer|Method|Stage|RestApi|Deployment|Model|Job|MLModel|BatchPrediction|DataSource|Evaluation|Training|Transcription|Collection|Entity|Vocabulary|LanguageModel|Backup|RecoveryPoint|VaultLock|Archive|Channel|Input|ImageVersion|ConfigurationTemplate|Distribution|Invalidation|CloudFrontOriginAccessIdentity|StreamingDistribution|OriginAccessControl|MilestoneState|WebACL|RateBasedRule|Regex|Pattern|MatchSet|ByteMatchSet|IPSet|RegexPatternSet|SizeConstraintSet|SqlInjectionMatchSet|XssMatchSet|Image|LifecyclePolicy|LifecycleHook|Registry|LayerVersion|Project|CodeReview)\s*\([^)]*\)'
 AWS_SDK_PATTERN = r'(?:AmazonAWS|AWS|com\.amazonaws)\.\w+\.\w+\([^)]*\)'
 AWS_CONFIG_PATTERN = r'(?:AWS\.|AMAZON\.)[A-Z0-9_]+'
 AWS_BUILDER_PATTERN = r'(?:AmazonAWS|AWS|com\.amazonaws)\.\w+\.\w+Builder\([^)]*\)'
 AWS_CLIENT_PATTERN = r'(?:AmazonAWS|AWS|com\.amazonaws)\.\w+\.\w+Client\([^)]*\)'
 AWS_CLOSURE_PATTERN = r'(?:AmazonAWS|AWS|com\.amazonaws)\.\w+\.\w+\s*\{[^}]*}\s*\.\w+\([^)]*\)'
+
 
 def parse_groovy_file(file_content: str) -> dict:
     '''
@@ -39,7 +40,8 @@ def parse_groovy_file(file_content: str) -> dict:
         # Find AWS CLI commands
         cli_matches = re.findall(AWS_CLI_PATTERN, file_content)
         if cli_matches:
-            result['AWS_CLI_Commands'] = [cmd.strip() for cmd in cli_matches]
+            result['AWS_CLI_Commands'] = [cmd.strip().replace(' ', '.')
+                                          for cmd in cli_matches]
 
         # Find AWS-specific method invocations
         method_matches = re.findall(AWS_METHOD_PATTERN, file_content)
@@ -76,4 +78,3 @@ def parse_groovy_file(file_content: str) -> dict:
         return {}
 
     return result
-    
