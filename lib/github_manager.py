@@ -8,7 +8,7 @@ from multiprocessing import Pool
 from typing import Any, Dict, List, Optional, Union
 
 from github import (Branch, ContentFile, Github,
-                   GithubException, Repository, Organization)
+                   GithubException, Repository)
 
 from lib.file_manager import (format_row_data,
                              prepare_match_functions,
@@ -51,12 +51,7 @@ def extract_files_from_repo(repo: Repository.Repository) -> List[ContentFile.Con
    """
    matched_files = []
    try:
-       contents = repo.get_contents("")
-       if contents is None:
-           logger.warning("Repository '%s' is empty or cannot be accessed.", repo.full_name)
-           return matched_files
-
-       queue = collections.deque([contents])
+       queue = collections.deque([repo.get_contents("")])
 
        while queue:
            file_content: Union[List[ContentFile.ContentFile], ContentFile.ContentFile] = queue.popleft()
@@ -151,61 +146,32 @@ def get_repo_metadata(a_repo: Repository.Repository) -> dict[str, Any]:
    return min_metadata
 
 
-def retrieve_repos(github_client: Github, user_or_org: Optional[str] = None, repository: Optional[str] = None) -> List[Repository.Repository]:
-    """
-    Retrieves repositories from organizations within the GitHub Enterprise Managed User (EMU).
+def retrieve_repos(github_client: Github, user_or_org: str, repository: Optional[str]) -> List[Repository.Repository]:
+   """Retrieves repositories based on user/org (paginated)."""
+   repos = []
+   try:
+       if "/" in user_or_org:  # Handle organization format (username/org)
+           org = user_or_org.split("/")
+           if repository:
+               repos.append(github_client.get_organization(org).get_repo(repository))
+           else:
+               for repo in github_client.get_organization(org).get_repos():
+                   repos.append(repo)  # Append individual repositories
+       else:
+           if repository:
+               repos.append(github_client.get_user(user_or_org).get_repo(repository))
+           else:
+               for repo in github_client.get_user().get_repos():
+                   repos.append(repo)  # Append individual repositories
+   except GithubException as e:
+       logger.error("Error retrieving repos for %s: %s", user_or_org, e)
 
-    Args:
-        github_client (Github): An authenticated Github client instance.
-        user_or_org (Optional[str]): The username or organization name. If not provided, it will retrieve repositories from all organizations.
-        repository (Optional[str]): The name of a specific repository to retrieve. If not provided, it will retrieve all repositories.
+   if repos:
+       logger.info("Found %s repositories:", len(repos))
+       for repo in repos:
+           logger.info("\t- %s", repo.full_name)
 
-    Returns:
-        List[Repository.Repository]: A list of Repository objects representing the retrieved repositories.
-    """
-    repos = []
-
-    try:
-        if user_or_org:
-            if "/" in user_or_org:  # Handle organization format (username/org)
-                org_name = user_or_org.split("/")[1]
-                org = github_client.get_organization(org_name)
-                repos = get_org_repos(org, repository)
-            else:
-                org = github_client.get_organization(user_or_org)
-                repos = get_org_repos(org, repository)
-        else:
-            for org in github_client.get_organizations():
-                repos.extend(get_org_repos(org, repository))
-
-    except GithubException as e:
-        logger.error("Error retrieving repos: %s", e)
-
-    if repos:
-        logger.info("Found %s repositories:", len(repos))
-        for repo in repos:
-            logger.info("\t- %s", repo.full_name)
-    else:
-        logger.warning("No repositories found.")
-
-    return repos
-
-
-def get_org_repos(org: Organization.Organization, repository: Optional[str] = None) -> List[Repository.Repository]:
-    """
-    Retrieves repositories from a specific organization.
-
-    Args:
-        org (Organization.Organization): The organization object.
-        repository (Optional[str]): The name of a specific repository to retrieve. If not provided, it will retrieve all repositories.
-
-    Returns:
-        List[Repository.Repository]: A list of Repository objects representing the retrieved repositories.
-    """
-    if repository:
-        return [org.get_repo(repository)]
-    else:
-        return list(org.get_repos(type='all'))
+   return repos
 
 
 def analyze_repo(repo: Repository.Repository, match_functions: list[dict, Any], output_file):
@@ -222,24 +188,29 @@ def analyze_repo(repo: Repository.Repository, match_functions: list[dict, Any], 
 
    logger.debug("match_function: %s", match_functions)
 
+   try:
+       contents = repo.get_contents("")
+       if not contents:
+           logger.warning("Repository '%s' is empty. Skipping analysis.", repo.full_name)
+           return
+   except GithubException as e:
+       logger.error("Error accessing repository '%s': %s", repo.full_name, e)
+       return
+
    # Extract metadata
-   branch_metadata: dict[str, Any] = {}
+   branch_metadata: dict[str, Any]
    try:
        branch_metadata = get_repo_metadata(a_repo=repo)
    except GithubException as e:
        logger.error("Error getting GitHub metadata. Repository '%s'. Error: %s", repo.full_name, e)
+       branch_metadata = {}
 
    # Open CSV file (modify based on your CSV handling logic)
    with open(output_file, 'a', newline='', encoding='utf-8') as csvfile:
        writer = csv.writer(csvfile)
 
        # Loop over fetched files and configurations
-       files = extract_files_from_repo(repo)
-       if not files:
-           logger.warning("No files found in repository '%s'. Skipping analysis.", repo.full_name)
-           return
-
-       for file_content in files:
+       for file_content in extract_files_from_repo(repo):
            # logger.info("-----------------------------------------")
            logger.info("Analyzing file --> %s", f"{repo.full_name}/{file_content.path}")
            # logger.info("-----------------------------------------")
