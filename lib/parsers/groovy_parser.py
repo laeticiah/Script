@@ -32,11 +32,6 @@ def parse_groovy_file(file_content: str) -> dict:
     result = {}
 
     try:
-        # Find AWS-related patterns
-        aws_matches = re.findall(AWS_PATTERN, file_content)
-        if aws_matches:
-            result['AWS_Related'] = list(set(aws_matches))
-
         # Find AWS CLI commands
         cli_matches = re.findall(AWS_CLI_PATTERN, file_content)
         if cli_matches:
