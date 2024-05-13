@@ -51,15 +51,12 @@ assets:
     file_match: '*.yml'
     matchType: content
     content_match:
-      - 'name:'
       - 'amazon.aws.'
       - 'community.aws.'
     parse_function: ansible
   - type: YAML (Ansible)
     file_match: '*.yaml'
     matchType: content
-    content_match:
-      - 'name:'
       - 'amazon.aws.'
       - 'community.aws.'
     parse_function: ansible
