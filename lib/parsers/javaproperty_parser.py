@@ -1,11 +1,11 @@
-def parse_javaproperty_file(content):
+def parse_java_property_file(content):
     keys = []
     for line in content.split('\n'):
         line = line.strip()
         if line.startswith('#') or not line:
             continue
         # Extract the key part (before the first '=')
-        if 'AWS' in line:
+        if 'AWS' in line.upper():
             key = line.split('=', 1)[0].strip()
             keys.append(key)
     return keys

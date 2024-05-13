@@ -127,6 +127,10 @@ assets:
     file_match: '*.groovy'
     matchType: file
     parse_function: groovy 
+  - type": dotnet
+    file_match: 'web.config'
+    matchType: file
+    parse_function: webconfig
   - type: Jenkins
     file_match: 'jenkinsfile'
     matchType: file
@@ -157,13 +161,6 @@ assets:
     file_match: '*.aspx'
     matchType: file
     parse_function: dotnet
-  # - type: ASPNet
-  #   file_match:
-  #     - '*.aspx'
-  #     - '*.ascx'
-  #     - '*.asmx'
-  #   matchType: file
-  #   parse_function: dotnet
   - type: CSharpProject
     file_match: '*.csproj'
     matchType: file

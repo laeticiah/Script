@@ -101,7 +101,8 @@ def match_file(file_content: ContentFile.ContentFile, file_match: str, _) -> boo
     try:
         return fnmatch.fnmatch(file_content.name, file_match)
     except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.error("Failed matching file name and file_match for file %s: %s", file_content.path, e)
+        logger.error(
+            "Failed matching file name and file_match for file %s: %s", file_content.path, e)
         return False
 
 
@@ -123,7 +124,7 @@ def match_content(file_content: ContentFile.ContentFile, file_match: str, conten
     logger.debug("Filename match pattern: %s", file_match)
     logger.debug("Content match patterns: %s", content_match)
     try:
-        if fnmatch.fnmatch(file_content.name, file_match):
+        if fnmatch.fnmatch(file_content.name, file_match) and '/test/' not in file_content.path:
             content = file_content.decoded_content.decode('utf-8')
             logger.debug("content: %s", content)
             if content is not None:
@@ -131,10 +132,12 @@ def match_content(file_content: ContentFile.ContentFile, file_match: str, conten
         return False
     except (UnicodeDecodeError, AttributeError):
         # Handle cases where decoding fails or encoding is not available
-        logger.warning("Failed to decode content for file: %s", file_content.name)
+        logger.warning("Failed to decode content for file: %s",
+                       file_content.name)
         return False
     except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.error("Failed matching file content, file_match, content_match for file %s: %s", file_content.path, e)
+        logger.error(
+            "Failed matching file content, file_match, content_match for file %s: %s", file_content.path, e)
         return False
 
 
@@ -223,14 +226,16 @@ def process_and_analyze_file(parser: str,
         'groovy': groovy_parser.parse_groovy_file,
         'dotnet': dotnet_parser.parse_dotnet_file,
         'manifest': manifest_parser.parse_manifest_file,
-        'javaproperty': javaproperty.parse_javaproperty_file,
-        'jupyter': jupyter_parser.parse_jupyter_file,
+        'javaproperty': javaproperty_parser.parse_java_property_file,
+        'jupyter': jupyter_parser.parse_notebook_file,
+        'webconfig': dotnet_parser.parse_web_config,
     }
 
     parse_function = parsers.get(parser)
     logger.debug("parse_function: %s", parse_function)
     if not parse_function:
-        logger.warning('Invalid parse function specified for asset type: %s', asset_type)
+        logger.warning(
+            'Invalid parse function specified for asset type: %s', asset_type)
         return None  # Or raise an exception
 
     if not callable(parse_function):

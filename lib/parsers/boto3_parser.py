@@ -22,35 +22,31 @@ def parse_boto3_file(file_contents: str):
 
     tree = ast.parse(file_contents)
     resource_creations = []
+    boto3_instances = {}
 
     try:
         for node in ast.walk(tree):
-            if isinstance(node, ast.Call):
-                if hasattr(node.func, 'attr') and any(action in node.func.attr for action in [
-                    'create', 'register', 'run', 'start', 'stop', 'terminate',
-                    'update', 'delete', 'describe', 'list', 'get', 'put',
-                    'attach', 'detach', 'associate', 'disassociate', 'add',
-                    'remove', 'authorize', 'revoke', 'modify', 'enable',
-                    'disable', 'deploy', 'invoke', 'publish', 'send', 'upload',
-                    'download', 'copy', 'restore', 'reboot', 'deregister',
-                    'unassign', 'allocate', 'release', 'purchase', 'reject',
-                    'accept', 'confirm', 'deny', 'reset', 'import', 'export',
-                    'change', 'check', 'validate', 'verify', 'configure',
-                    'unsubscribe', 'initiate', 'complete', 'discover', 'analyze',
-                    'encrypt', 'decrypt', 'rotate', 'generate', 'schedule',
-                    'unschedule', 'grant', 'approve', 'decline', 'migrate',
-                    'monitor', 'unmonitor', 'notify', 'recover', 'redeploy'
-                ]):
-                    if hasattr(node.func.value, 'attr'):
-                        resource_creations.append(f"{node.func.value.attr}.{node.func.attr}")
-                    elif hasattr(node.func.value, 'id'):
-                        resource_creations.append(f"{node.func.value.id}.{node.func.attr}")
+            if isinstance(node, ast.Assign):
+                # Check for boto3 client or resource creation
+                if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute):
+                    if node.value.func.attr in ['client', 'resource'] and getattr(node.value.func.value, 'id', '') == 'boto3':
+                        for target in node.targets:
+                            if isinstance(target, ast.Name):
+                                boto3_instances[target.id] = node.value.func.attr
+
+            elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                instance_name = getattr(node.func.value, 'id', None)
+                if instance_name in boto3_instances:
+                    # Check method calls on boto3 instances
+                    action = node.func.attr
+                    resource_creations.append(f"{instance_name}.{action}")
     except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error("Error parsing Python file: %s", str(e))
         return []
         # raise Exception("Error parsing Python file: %s", str(e))
 
     return resource_creations
+
 
 if __name__ == '__main__':
     script_path = r'resources/boto3_script.py'
