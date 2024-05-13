@@ -115,14 +115,14 @@ assets:
       - package io.awspring.cloud
       - 'import org.springframework.cloud'
     parse_function: springcloud
-  - type: Manifest File
-    file_match: '**/manifest.yml'
-    matchType: file
-    parse_function: manifest
-  - type": Java Properties
-    file_match: '**/*.properties'
-    matchType: file
-    parse_function: javaproperty
+  # - type: Manifest File
+  #   file_match: '**/manifest.yml'
+  #   matchType: file
+  #   parse_function: manifest
+  # - type": Java Properties
+  #   file_match: '**/*.properties'
+  #   matchType: file
+  #   parse_function: javaproperty
   - type: Jenkins
     file_match: '*.groovy'
     matchType: file
@@ -148,28 +148,28 @@ assets:
       - 'using AWS.'
       - 'public class'
     parse_function: csharp
-  - type: VBNet
-    file_match: '*.vb'
-    matchType: file
-    content_match:
-      - 'Imports System'
-      - 'Imports Amazon.'
-      - 'Imports AWS.'
-      - 'Public Class'
-    parse_function: dotnet
-  - type: ASPNet
-    file_match: '*.aspx'
-    matchType: file
-    parse_function: dotnet
-  - type: CSharpProject
-    file_match: '*.csproj'
-    matchType: file
-    parse_function: dotnet
-  - type: VBNetProject
-    file_match: '*.vbproj'
-    matchType: file
-    parse_function: dotnet
-  - type: dot net
-    file_match: '*.*proj'
-    matchType: file
-    parse_function: dotnet
+  # - type: VBNet
+  #   file_match: '*.vb'
+  #   matchType: file
+  #   content_match:
+  #     - 'Imports System'
+  #     - 'Imports Amazon.'
+  #     - 'Imports AWS.'
+  #     - 'Public Class'
+  #   parse_function: dotnet
+  # - type: ASPNet
+  #   file_match: '*.aspx'
+  #   matchType: file
+  #   parse_function: dotnet
+  # - type: CSharpProject
+  #   file_match: '*.csproj'
+  #   matchType: file
+  #   parse_function: dotnet
+  # - type: VBNetProject
+  #   file_match: '*.vbproj'
+  #   matchType: file
+  #   parse_function: dotnet
+  # - type: dot net
+  #   file_match: '*.*proj'
+  #   matchType: file
+  #   parse_function: dotnet
