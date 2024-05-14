@@ -24,7 +24,7 @@ from lib.parsers import (
     springcloud_parser,
     groovy_parser,
     dotnet_parser,
-    java_property_parser,
+    javaproperty_parser,
     manifest_parser,
     jupyter_parser
 )
@@ -223,8 +223,8 @@ def process_and_analyze_file(parser: str,
         'groovy': groovy_parser.parse_groovy_file,
         'dotnet': dotnet_parser.parse_dotnet_file,
         'manifest': manifest_parser.parse_manifest_file,
-        'java_property': java_property.parse_java_property_file,
-        'jupyter': jupyter_parser.parse_jupyter_file,
+        'javaproperty': javaproperty_parser.parse_java_property_file,
+        'jupyter': jupyter_parser.parse_notebook_file,
     }
 
     parse_function = parsers.get(parser)
